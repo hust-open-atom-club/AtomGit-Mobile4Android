@@ -1,15 +1,20 @@
 *.iml
 .gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+build/
+.kotlin/
+.local/
 .DS_Store
-/build
 /captures
 .externalNativeBuild
 .cxx
+
+# IDE 本地配置
+.idea/
+.vscode/
+
+# 本地环境文件
+/local.properties
 local.properties
+keystore.properties
+*.jks
+*.keystore
