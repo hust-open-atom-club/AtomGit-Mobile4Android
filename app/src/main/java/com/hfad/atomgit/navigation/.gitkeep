@@ -1,0 +1,1 @@
+单 Activity 主导航。四个顶层入口是动态、待办、通知、我的；Issue、Pull Request、项目、组织详情共用路由。
