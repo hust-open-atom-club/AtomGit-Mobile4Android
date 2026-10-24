@@ -1,0 +1,46 @@
+name: 功能建议
+description: 提出新的功能或体验改进建议
+title: "[Feature] "
+labels: [ "enhancement" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        欢迎提出建议。请说明场景与价值，方便评估是否纳入首版范围。
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景与场景
+      description: 在什么使用场景下需要这个功能？
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望方案
+      description: 你希望如何实现或如何交互？若有参考应用也可说明
+      placeholder: 描述期望的功能表现
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 建议归属范围
+      description: 首版以任务书冻结的验收范围为准，超出范围的功能需单独评估
+      options:
+        - 首版必选范围内
+        - 条件扩展（需接口验证后评估）
+        - 超出本课题范围
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternative
+    attributes:
+      label: 替代方案
+      description: 是否有其他实现方式或临时规避手段？
+    validations:
+      required: false
