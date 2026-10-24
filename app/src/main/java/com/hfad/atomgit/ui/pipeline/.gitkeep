@@ -1,0 +1,1 @@
+项目级流水线。使用 v8 读取运行列表和状态，并提供网页入口。只有 head_sha 与 head_branch 对上的运行才显示在 Pull Request 上。

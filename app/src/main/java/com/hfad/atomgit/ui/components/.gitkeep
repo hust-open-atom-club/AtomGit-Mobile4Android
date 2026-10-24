@@ -1,0 +1,1 @@
+跨屏幕复用的 Compose 组件。只负责展示，不持有 Retrofit、DAO 或 Token。
