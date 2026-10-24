@@ -1,0 +1,1 @@
+Pull Request。列表、详情、按文件的基础 diff、普通评论、正式批准和状态展示。批准只更新审查人 accept；评审人保持 pending。state 仍为 open 时不显示已合并。

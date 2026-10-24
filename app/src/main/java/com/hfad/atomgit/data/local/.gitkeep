@@ -1,0 +1,1 @@
+本地数据。Room 存仓库和待办摘要，DataStore 存设置，Keystore 管 PAT 加密密钥。文件内容、diff、评论和流水线详情不入库。
