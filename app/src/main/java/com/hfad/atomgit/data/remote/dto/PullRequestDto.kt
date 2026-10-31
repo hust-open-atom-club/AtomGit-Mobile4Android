@@ -38,6 +38,7 @@ data class PullAssigneeDto(
     val login: String? = null,
     val name: String? = null,
     val accept: Boolean? = null,
+    @SerialName("accept_status") val acceptStatus: String? = null,
 )
 
 @Serializable
