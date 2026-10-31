@@ -4,6 +4,7 @@ import com.hfad.atomgit.data.remote.api.AtomGitV5Service
 import com.hfad.atomgit.data.remote.api.AtomGitV8Service
 import com.hfad.atomgit.data.remote.auth.AccessTokenProvider
 import com.hfad.atomgit.data.remote.auth.AuthInterceptor
+import com.hfad.atomgit.data.remote.auth.SessionExpiryNotifier
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -25,6 +26,7 @@ internal class RemoteTestFixture(
     val authInterceptor = AuthInterceptor(
         tokenProvider = tokenProvider,
         apiHost = server.hostName,
+        expiryNotifier = SessionExpiryNotifier(),
     )
 
     val client: OkHttpClient = OkHttpClient.Builder()

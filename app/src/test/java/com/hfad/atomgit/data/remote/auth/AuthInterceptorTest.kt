@@ -1,6 +1,10 @@
 package com.hfad.atomgit.data.remote.auth
 
 import com.hfad.atomgit.data.remote.AtomGitHosts
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
@@ -15,12 +19,13 @@ import org.junit.Test
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AuthInterceptorTest {
 
     @Test
     fun addsBearerOnlyOnApiHost() {
         val provider = AccessTokenProvider().apply { setToken("pat-secret") }
-        val interceptor = AuthInterceptor(provider, AtomGitHosts.API)
+        val interceptor = AuthInterceptor(provider, AtomGitHosts.API, SessionExpiryNotifier())
 
         val apiChain = RecordingChain(
             Request.Builder().url("https://api.atomgit.com/api/v5/user").build(),
@@ -38,7 +43,7 @@ class AuthInterceptorTest {
 
     @Test
     fun throwsWhenTokenMissingOnApiHost() {
-        val interceptor = AuthInterceptor(AccessTokenProvider(), AtomGitHosts.API)
+        val interceptor = AuthInterceptor(AccessTokenProvider(), AtomGitHosts.API, SessionExpiryNotifier())
         val chain = RecordingChain(
             Request.Builder().url("https://api.atomgit.com/api/v5/user").build(),
         )
@@ -51,8 +56,48 @@ class AuthInterceptorTest {
         assertNull(chain.proceeded)
     }
 
+    @Test
+    fun notifiesExpiryOnUnauthorizedResponse() = runTest {
+        val provider = AccessTokenProvider().apply { setToken("pat") }
+        val notifier = SessionExpiryNotifier()
+        val interceptor = AuthInterceptor(provider, AtomGitHosts.API, notifier)
+        val received = mutableListOf<Unit>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            notifier.events.collect { received += it }
+        }
+
+        interceptor.intercept(
+            RecordingChain(
+                Request.Builder().url("https://api.atomgit.com/api/v5/user").build(),
+                code = 401,
+            ),
+        )
+        assertEquals(1, received.size)
+
+        job.cancel()
+    }
+
+    @Test
+    fun doesNotNotifyOnSuccessResponse() = runTest {
+        val provider = AccessTokenProvider().apply { setToken("pat") }
+        val notifier = SessionExpiryNotifier()
+        val interceptor = AuthInterceptor(provider, AtomGitHosts.API, notifier)
+        val received = mutableListOf<Unit>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            notifier.events.collect { received += it }
+        }
+
+        interceptor.intercept(
+            RecordingChain(Request.Builder().url("https://api.atomgit.com/api/v5/user").build()),
+        )
+        assertEquals(0, received.size)
+
+        job.cancel()
+    }
+
     private class RecordingChain(
         private val original: Request,
+        private val code: Int = 200,
     ) : Interceptor.Chain {
         var proceeded: Request? = null
 
@@ -63,8 +108,8 @@ class AuthInterceptorTest {
             return Response.Builder()
                 .request(request)
                 .protocol(Protocol.HTTP_1_1)
-                .code(200)
-                .message("OK")
+                .code(code)
+                .message("stub")
                 .body("{}".toResponseBody("application/json".toMediaType()))
                 .build()
         }

@@ -86,7 +86,6 @@ fun AtomGitNavHost(
                     entry<ProfileRoute> {
                         ProfileScreen(
                             listState = listStates.getValue(TopLevelTab.Profile),
-                            onOpenIssue = { owner, repo, number -> navState.push(IssueDetailRoute(owner, repo, number)) },
                         )
                     }
                     entry<IssueDetailRoute> { route ->
