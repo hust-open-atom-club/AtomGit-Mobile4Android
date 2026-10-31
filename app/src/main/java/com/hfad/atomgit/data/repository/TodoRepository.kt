@@ -10,6 +10,7 @@ import com.hfad.atomgit.data.remote.totalCountHeader
 import com.hfad.atomgit.data.remote.totalPageHeader
 import com.hfad.atomgit.data.repository.mapping.toTodoItem
 import com.hfad.atomgit.data.session.CurrentAccountSource
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -103,6 +104,7 @@ class DefaultTodoRepository @Inject constructor(
 private fun <T> retrofit2.Response<List<T>>.toTodoPage(
     mapItem: (T) -> com.hfad.atomgit.data.model.TodoItem,
 ): TodoPage {
+    if (!isSuccessful) throw HttpException(this)
     val body = body().orEmpty()
     return TodoPage(
         items = body.map(mapItem),

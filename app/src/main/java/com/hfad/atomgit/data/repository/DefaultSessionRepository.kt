@@ -80,6 +80,7 @@ class DefaultSessionRepository @Inject constructor(
                 val encrypted = cipher.encrypt(token)
                 if (encrypted == null) {
                     tokenProvider.clear()
+                    accountSource.clear()
                     return@withLock LoginResult.Failure(LoginFailure.Unexpected)
                 }
                 val persisted = try {
@@ -100,6 +101,7 @@ class DefaultSessionRepository @Inject constructor(
                 }
                 if (!persisted) {
                     tokenProvider.clear()
+                    accountSource.clear()
                     return@withLock LoginResult.Failure(LoginFailure.Unexpected)
                 }
                 _expired.value = false

@@ -29,7 +29,7 @@ fun PullRequestDto.toTodoItem(accountId: String): TodoItem = TodoItem(
     updatedAt = updatedAt,
     state = state,
     assignees = assignees.orEmpty().map {
-        TodoAssignee(login = it.login, accept = it.accept)
+        TodoAssignee(login = it.login, accept = it.accept, acceptStatus = it.acceptStatus)
     },
     approvalReviewers = approvalReviewers.orEmpty().map {
         TodoReviewer(

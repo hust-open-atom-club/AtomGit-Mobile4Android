@@ -168,6 +168,33 @@ class TodoRepositoryTest {
     }
 
     @Test
+    fun listAssignedOpenIssues_httpErrorIsNotAnEmptyPage() = runTest {
+        fixture.server.enqueue(MockResponse().setResponseCode(403).setBody("""{"message":"forbidden"}"""))
+
+        try {
+            repository.listAssignedOpenIssues(page = 1, perPage = 20)
+            fail("expected HttpException")
+        } catch (e: retrofit2.HttpException) {
+            assertEquals(403, e.code())
+        }
+    }
+
+    @Test
+    fun repoPathFallsBackToSlashFullName() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """[{"number":1,"title":"mine","state":"open","repository":{"full_name":"alice/repo"}}]""",
+                ),
+        )
+
+        val page = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+
+        assertEquals("alice/repo", page.items.single().repoPath)
+    }
+
+    @Test
     fun listNeedMyReviewPulls_andCreatedByMe_useDistinctScopes() = runTest {
         fixture.server.enqueue(MockResponse().setResponseCode(200).setBody("[]"))
         repository.listNeedMyReviewPulls(PullState.Open, page = 1, perPage = 5)

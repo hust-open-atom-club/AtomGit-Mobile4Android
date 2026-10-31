@@ -8,6 +8,8 @@ enum class TodoKind {
 data class TodoAssignee(
     val login: String?,
     val accept: Boolean?,
+    /** 实测审查人条目里也有该字段，常为 null；评审人的状态在 [TodoReviewer.acceptStatus]。 */
+    val acceptStatus: String? = null,
 )
 
 data class TodoReviewer(
