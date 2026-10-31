@@ -9,6 +9,8 @@ import com.hfad.atomgit.data.remote.api.CurrentUserApi
 import com.hfad.atomgit.data.remote.auth.AccessTokenProvider
 import com.hfad.atomgit.data.remote.auth.SessionExpiryNotifier
 import com.hfad.atomgit.data.remote.dto.UserDto
+import com.hfad.atomgit.data.session.CurrentAccount
+import com.hfad.atomgit.data.session.CurrentAccountSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
@@ -33,6 +35,7 @@ class DefaultSessionRepositoryTest {
     private val cipher = FakeTokenCipher()
     private val store = InMemorySessionStore()
     private val tokenProvider = AccessTokenProvider()
+    private val accountSource = CurrentAccountSource()
     private val notifier = SessionExpiryNotifier()
 
     @Test
@@ -43,6 +46,7 @@ class DefaultSessionRepositoryTest {
 
         assertNull(repository.session.value)
         assertNull(tokenProvider.getToken())
+        assertNull(accountSource.get())
     }
 
     @Test
@@ -57,6 +61,7 @@ class DefaultSessionRepositoryTest {
             repository.session.value,
         )
         assertEquals("pat-123", tokenProvider.getToken())
+        assertEquals(CurrentAccount(id = "u1", login = "alice"), accountSource.get())
     }
 
     @Test
@@ -186,6 +191,7 @@ class DefaultSessionRepositoryTest {
         cipher = cipher,
         store = store,
         tokenProvider = tokenProvider,
+        accountSource = accountSource,
         expiryNotifier = notifier,
         scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
     )

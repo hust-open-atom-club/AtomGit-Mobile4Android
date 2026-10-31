@@ -8,6 +8,7 @@ import com.hfad.atomgit.data.model.AuthSession
 import com.hfad.atomgit.data.remote.api.CurrentUserApi
 import com.hfad.atomgit.data.remote.auth.AccessTokenProvider
 import com.hfad.atomgit.data.remote.auth.SessionExpiryNotifier
+import com.hfad.atomgit.data.session.CurrentAccountSource
 import com.hfad.atomgit.di.ApplicationScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +29,7 @@ class DefaultSessionRepository @Inject constructor(
     private val cipher: TokenCipher,
     private val store: SessionStore,
     private val tokenProvider: AccessTokenProvider,
+    private val accountSource: CurrentAccountSource,
     private val expiryNotifier: SessionExpiryNotifier,
     @param:ApplicationScope private val scope: CoroutineScope,
 ) : SessionRepository {
@@ -51,6 +53,7 @@ class DefaultSessionRepository @Inject constructor(
         val stored = store.read() ?: return@withLock
         if (stored.version != SESSION_STORAGE_VERSION) {
             store.clear()
+            accountSource.clear()
             return@withLock
         }
         val token = decodeCiphertext(stored.ciphertext)?.let { cipher.decrypt(it) }
@@ -58,10 +61,13 @@ class DefaultSessionRepository @Inject constructor(
             // 密钥失效或密文损坏：清掉密文，要求重新登录
             store.clear()
             tokenProvider.clear()
+            accountSource.clear()
             return@withLock
         }
         tokenProvider.setToken(token)
-        _session.value = stored.toAuthSession()
+        val session = stored.toAuthSession()
+        accountSource.set(id = session.accountId, login = session.login)
+        _session.value = session
     }
 
     override suspend fun login(rawToken: String): LoginResult {
@@ -97,6 +103,7 @@ class DefaultSessionRepository @Inject constructor(
                     return@withLock LoginResult.Failure(LoginFailure.Unexpected)
                 }
                 _expired.value = false
+                accountSource.set(id = user.id, login = user.login)
                 _session.value = AuthSession(
                     accountId = user.id,
                     login = user.login,
@@ -106,17 +113,21 @@ class DefaultSessionRepository @Inject constructor(
                 LoginResult.Success
             } catch (e: CancellationException) {
                 tokenProvider.clear()
+                accountSource.clear()
                 throw e
             } catch (e: HttpException) {
                 tokenProvider.clear()
+                accountSource.clear()
                 LoginResult.Failure(
                     if (e.code() == 401) LoginFailure.InvalidToken else LoginFailure.Unexpected,
                 )
             } catch (e: IOException) {
                 tokenProvider.clear()
+                accountSource.clear()
                 LoginResult.Failure(LoginFailure.Network)
             } catch (e: Exception) {
                 tokenProvider.clear()
+                accountSource.clear()
                 LoginResult.Failure(LoginFailure.Unexpected)
             }
         }
@@ -125,6 +136,7 @@ class DefaultSessionRepository @Inject constructor(
     override suspend fun logout() = mutex.withLock {
         store.clear()
         tokenProvider.clear()
+        accountSource.clear()
         _expired.value = false
         _session.value = null
     }
@@ -135,6 +147,7 @@ class DefaultSessionRepository @Inject constructor(
             if (_session.value == null) return@withLock
             store.clear()
             tokenProvider.clear()
+            accountSource.clear()
             _expired.value = true
             _session.value = null
         }
