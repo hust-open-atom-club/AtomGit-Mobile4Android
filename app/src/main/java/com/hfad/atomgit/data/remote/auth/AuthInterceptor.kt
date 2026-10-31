@@ -7,14 +7,12 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * 网络拦截器：只给 [apiHost] 附加 Bearer。
- * 重定向到其他主机时这一跳不会带上令牌；令牌不进查询串。
- */
+/** 只给 [apiHost] 附加 Bearer；401 只广播，由会话层决定是否结束会话。 */
 @Singleton
 class AuthInterceptor @Inject constructor(
     private val tokenProvider: AccessTokenProvider,
     @param:ApiHost private val apiHost: String,
+    private val expiryNotifier: SessionExpiryNotifier,
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -26,6 +24,10 @@ class AuthInterceptor @Inject constructor(
         val authenticated = request.newBuilder()
             .header("Authorization", "Bearer $token")
             .build()
-        return chain.proceed(authenticated)
+        val response = chain.proceed(authenticated)
+        if (response.code == 401) {
+            expiryNotifier.notifyExpired()
+        }
+        return response
     }
 }
