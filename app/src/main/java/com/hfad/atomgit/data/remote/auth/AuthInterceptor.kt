@@ -7,6 +7,9 @@ import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** 本地无可用 PAT。 */
+class MissingTokenException : IOException("Auth token unavailable")
+
 /** 只给 [apiHost] 附加 Bearer；401 只广播，由会话层决定是否结束会话。 */
 @Singleton
 class AuthInterceptor @Inject constructor(
@@ -20,7 +23,7 @@ class AuthInterceptor @Inject constructor(
             return chain.proceed(request)
         }
         val token = tokenProvider.getToken()
-            ?: throw IOException("Auth token unavailable")
+            ?: throw MissingTokenException()
         val authenticated = request.newBuilder()
             .header("Authorization", "Bearer $token")
             .build()
