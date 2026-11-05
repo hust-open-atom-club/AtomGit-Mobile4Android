@@ -4,6 +4,8 @@ import com.hfad.atomgit.data.model.TodoKind
 import com.hfad.atomgit.data.remote.RemoteTestFixture
 import com.hfad.atomgit.data.remote.api.IssueState
 import com.hfad.atomgit.data.remote.api.PullState
+import com.hfad.atomgit.data.remote.error.ApiError
+import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.session.CurrentAccountSource
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
@@ -11,7 +13,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -39,14 +40,12 @@ class TodoRepositoryTest {
     }
 
     @Test
-    fun listAssignedOpenIssues_withoutAccount_doesNotSendRequest() = runTest {
+    fun listAssignedOpenIssues_withoutAccount_returnsUnauthorizedWithoutRequest() = runTest {
         accountSource.clear()
-        try {
-            repository.listAssignedOpenIssues(page = 1, perPage = 20)
-            fail("expected IllegalStateException")
-        } catch (e: IllegalStateException) {
-            assertTrue(e.message!!.contains("Current account unavailable"))
-        }
+
+        val result = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+
+        assertEquals(ApiResult.Failure(ApiError.Unauthorized), result)
         assertEquals(0, fixture.server.requestCount)
     }
 
@@ -75,7 +74,7 @@ class TodoRepositoryTest {
                 ),
         )
 
-        val page = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+        val page = repository.listAssignedOpenIssues(page = 1, perPage = 20).valueOrFail()
 
         assertEquals(1L, page.totalCount)
         assertEquals(1, page.totalPage)
@@ -106,7 +105,7 @@ class TodoRepositoryTest {
             state = IssueState.All,
             page = 99,
             perPage = 20,
-        )
+        ).valueOrFail()
 
         assertTrue(page.items.isEmpty())
         assertNull(page.totalCount)
@@ -152,7 +151,7 @@ class TodoRepositoryTest {
             state = PullState.Open,
             page = 1,
             perPage = 10,
-        )
+        ).valueOrFail()
 
         val item = page.items.single()
         assertEquals(TodoKind.PullRequest, item.kind)
@@ -168,15 +167,28 @@ class TodoRepositoryTest {
     }
 
     @Test
-    fun listAssignedOpenIssues_httpErrorIsNotAnEmptyPage() = runTest {
-        fixture.server.enqueue(MockResponse().setResponseCode(403).setBody("""{"message":"forbidden"}"""))
+    fun listAssignedOpenIssues_forbiddenIsNotAnEmptyPage() = runTest {
+        fixture.server.enqueue(
+            MockResponse().setResponseCode(403).setBody("""{"message":"forbidden"}"""),
+        )
 
-        try {
-            repository.listAssignedOpenIssues(page = 1, perPage = 20)
-            fail("expected HttpException")
-        } catch (e: retrofit2.HttpException) {
-            assertEquals(403, e.code())
-        }
+        val result = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+
+        assertEquals(ApiResult.Failure(ApiError.Forbidden), result)
+    }
+
+    @Test
+    fun listAssignedOpenIssues_rateLimitedKeepsRetryAfter() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeader("Retry-After", "30")
+                .setBody("""{"message":"slow down"}"""),
+        )
+
+        val result = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+
+        assertEquals(ApiResult.Failure(ApiError.RateLimited(30)), result)
     }
 
     @Test
@@ -189,7 +201,7 @@ class TodoRepositoryTest {
                 ),
         )
 
-        val page = repository.listAssignedOpenIssues(page = 1, perPage = 20)
+        val page = repository.listAssignedOpenIssues(page = 1, perPage = 20).valueOrFail()
 
         assertEquals("alice/repo", page.items.single().repoPath)
     }
@@ -197,17 +209,22 @@ class TodoRepositoryTest {
     @Test
     fun listNeedMyReviewPulls_andCreatedByMe_useDistinctScopes() = runTest {
         fixture.server.enqueue(MockResponse().setResponseCode(200).setBody("[]"))
-        repository.listNeedMyReviewPulls(PullState.Open, page = 1, perPage = 5)
+        repository.listNeedMyReviewPulls(PullState.Open, page = 1, perPage = 5).valueOrFail()
         assertEquals(
             "/api/v5/user/pulls?scope=need_my_review&state=open&page=1&per_page=5",
             fixture.server.takeRequest().path,
         )
 
         fixture.server.enqueue(MockResponse().setResponseCode(200).setBody("[]"))
-        repository.listCreatedByMePulls(PullState.Open, page = 1, perPage = 5)
+        repository.listCreatedByMePulls(PullState.Open, page = 1, perPage = 5).valueOrFail()
         assertEquals(
             "/api/v5/user/pulls?scope=created_by_me&state=open&page=1&per_page=5",
             fixture.server.takeRequest().path,
         )
     }
+}
+
+private fun <T> ApiResult<T>.valueOrFail(): T = when (this) {
+    is ApiResult.Success -> value
+    is ApiResult.Failure -> throw AssertionError("expected success but was $error")
 }

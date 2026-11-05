@@ -2,6 +2,7 @@ package com.hfad.atomgit.data.repository
 
 import com.hfad.atomgit.data.remote.RemoteTestFixture
 import com.hfad.atomgit.data.remote.api.PullState
+import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.remote.api.UserPullScope
 import com.hfad.atomgit.data.session.CurrentAccountSource
 import kotlinx.coroutines.test.runTest
@@ -75,7 +76,7 @@ class MeasuredApiProbeTest {
             ),
         )
 
-        val page = feed.listMyEvents(next = null)
+        val page = feed.listMyEvents(next = null).valueOrFail()
         assertEquals("MergeRequest", page.items.single().noteableType)
         assertEquals(1, page.items.single().noteableIid)
         assertEquals("2026-10-17T11:56:10.805Z", page.next)
@@ -109,7 +110,7 @@ class MeasuredApiProbeTest {
                 ),
         )
 
-        val page = todo.listAssignedOpenIssues(page = 1, perPage = 20)
+        val page = todo.listAssignedOpenIssues(page = 1, perPage = 20).valueOrFail()
         assertEquals("$namespacePath/$path", page.items.single().repoPath)
         assertFalse(page.items.single().repoPath!!.contains(' '))
     }
@@ -145,6 +146,7 @@ class MeasuredApiProbeTest {
         )
 
         val page = todo.listNeedMyApprovePulls(PullState.Open, page = 1, perPage = 20)
+            .valueOrFail()
         val item = page.items.single()
         assertEquals(totalCount.toLong(), page.totalCount)
         assertEquals(assigneeAccept, item.assignees.single().accept)
@@ -155,6 +157,11 @@ class MeasuredApiProbeTest {
             fixture.server.takeRequest().path,
         )
     }
+}
+
+private fun <T> ApiResult<T>.valueOrFail(): T = when (this) {
+    is ApiResult.Success -> value
+    is ApiResult.Failure -> throw AssertionError("expected success but was $error")
 }
 
 private fun loadMeasuredProbe(): kotlinx.serialization.json.JsonElement? {

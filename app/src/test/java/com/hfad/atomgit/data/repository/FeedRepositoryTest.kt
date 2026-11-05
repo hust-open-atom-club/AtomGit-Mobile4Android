@@ -1,6 +1,8 @@
 package com.hfad.atomgit.data.repository
 
 import com.hfad.atomgit.data.remote.RemoteTestFixture
+import com.hfad.atomgit.data.remote.error.ApiError
+import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.session.CurrentAccountSource
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
@@ -9,7 +11,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -37,14 +38,12 @@ class FeedRepositoryTest {
     }
 
     @Test
-    fun listMyEvents_withoutAccount_doesNotSendRequest() = runTest {
+    fun listMyEvents_withoutAccount_returnsUnauthorizedWithoutRequest() = runTest {
         accountSource.clear()
-        try {
-            repository.listMyEvents(next = null)
-            fail("expected IllegalStateException")
-        } catch (e: IllegalStateException) {
-            assertTrue(e.message!!.contains("Current account unavailable"))
-        }
+
+        val result = repository.listMyEvents(next = null)
+
+        assertEquals(ApiResult.Failure(ApiError.Unauthorized), result)
         assertEquals(0, fixture.server.requestCount)
     }
 
@@ -90,7 +89,7 @@ class FeedRepositoryTest {
                 ),
         )
 
-        val page = repository.listMyEvents(next = null)
+        val page = repository.listMyEvents(next = null).valueOrFail()
 
         assertEquals(2, page.items.size)
         assertEquals("2026-10-17T11:00:00.000Z", page.items[0].createdAt)
@@ -113,7 +112,7 @@ class FeedRepositoryTest {
                 .setBody("""{"events":{},"next":null}"""),
         )
 
-        val page = repository.listMyEvents(next = "2026-10-16T09:00:00.000Z")
+        val page = repository.listMyEvents(next = "2026-10-16T09:00:00.000Z").valueOrFail()
 
         assertTrue(page.items.isEmpty())
         assertNull(page.next)
@@ -122,6 +121,19 @@ class FeedRepositoryTest {
             "/api/v5/users/alice/events?next=2026-10-16T09%3A00%3A00.000Z",
             recorded.path,
         )
+    }
+
+    @Test
+    fun listMyEvents_serverErrorMapsToServer() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setBody("""{"message":"boom"}"""),
+        )
+
+        val result = repository.listMyEvents(next = null)
+
+        assertEquals(ApiResult.Failure(ApiError.Server(500, "boom")), result)
     }
 
     @Test
@@ -152,7 +164,7 @@ class FeedRepositoryTest {
             repo = "demo",
             page = 1,
             perPage = 20,
-        )
+        ).valueOrFail()
 
         assertEquals(1, page.items.size)
         assertTrue(page.hasNextPage)
@@ -164,10 +176,16 @@ class FeedRepositoryTest {
                 .setBody("""{"events":[],"has_next_page":0}"""),
         )
         val empty = repository.listRepoEvents("alice", "demo", page = 2, perPage = 20)
+            .valueOrFail()
         assertTrue(empty.items.isEmpty())
         assertFalse(empty.hasNextPage)
 
         val first = fixture.server.takeRequest()
         assertEquals("/api/v5/repos/alice/demo/events?page=1&per_page=20", first.path)
     }
+}
+
+private fun <T> ApiResult<T>.valueOrFail(): T = when (this) {
+    is ApiResult.Success -> value
+    is ApiResult.Failure -> throw AssertionError("expected success but was $error")
 }
