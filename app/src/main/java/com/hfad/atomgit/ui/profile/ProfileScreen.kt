@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * 我的入口。资料、项目和组织用本页示例数据；除退出登录外，点击只做按压或展开。
@@ -39,6 +40,8 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
+    val session by viewModel.session.collectAsStateWithLifecycle()
+    val displayName = session?.name?.takeIf { it.isNotBlank() } ?: session?.login ?: "未登录"
     var query by rememberSaveable { mutableStateOf("") }
     val visibleRepos = ProfileSample.repos.filter { repo ->
         query.isBlank() ||
@@ -56,8 +59,10 @@ fun ProfileScreen(
     ) {
         item {
             ProfileHeader(
+                displayName = displayName,
+                login = session?.login.orEmpty(),
+                avatarUrl = session?.avatarUrl,
                 onSettingsClick = {},
-                onStatusClick = {},
             )
         }
         item { SectionLabel("热门") }

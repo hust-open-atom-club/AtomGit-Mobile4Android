@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,13 +18,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 
 @Composable
 fun ProfileHeader(
+    displayName: String,
+    login: String,
+    avatarUrl: String?,
     onSettingsClick: () -> Unit,
-    onStatusClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -53,56 +56,60 @@ fun ProfileHeader(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = ProfileSample.displayName.take(1),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            ProfileAvatar(name = displayName, avatarUrl = avatarUrl)
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = ProfileSample.displayName,
+                    text = displayName,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(
-                    text = ProfileSample.login,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (login.isNotBlank()) {
+                    Text(
+                        text = login,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
-        Pressable(onClick = onStatusClick, modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = ProfileSample.status,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    }
+}
+
+@Composable
+private fun ProfileAvatar(
+    name: String,
+    avatarUrl: String?,
+) {
+    val fallback = MaterialTheme.colorScheme.primaryContainer
+    if (avatarUrl.isNullOrBlank()) {
+        LetterAvatar(name)
+        return
+    }
+    AsyncImage(
+        model = avatarUrl,
+        contentDescription = name,
+        modifier = Modifier
+            .size(72.dp)
+            .clip(CircleShape),
+        contentScale = ContentScale.Crop,
+        placeholder = ColorPainter(fallback),
+        error = ColorPainter(fallback),
+    )
+}
+
+@Composable
+private fun LetterAvatar(name: String) {
+    Box(
+        modifier = Modifier
+            .size(72.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
         Text(
-            text = ProfileSample.bio,
-            style = MaterialTheme.typography.bodyLarge,
+            text = name.take(1).ifBlank { "?" },
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
 }
