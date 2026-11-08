@@ -71,14 +71,14 @@ class DefaultSessionRepository @Inject constructor(
         refreshProfileLocked(stored)
     }
 
-    override suspend fun refreshProfile() = mutex.withLock {
-        if (_session.value == null) return@withLock
-        val stored = store.read() ?: return@withLock
+    override suspend fun refreshProfile(): Boolean = mutex.withLock {
+        if (_session.value == null) return@withLock true
+        val stored = store.read() ?: return@withLock true
         refreshProfileLocked(stored)
     }
 
-    /** 用已保存的令牌再读一次当前用户，补上登录之后才有的字段（例如 bio）。失败时保留本地会话。 */
-    private suspend fun refreshProfileLocked(stored: StoredSession) {
+    /** 用已保存的令牌再读一次当前用户。失败时保留本地会话并返回 `false`。 */
+    private suspend fun refreshProfileLocked(stored: StoredSession): Boolean {
         try {
             val user = currentUserApi.currentUser()
             accountSource.set(id = user.id, login = user.login)
@@ -94,6 +94,7 @@ class DefaultSessionRepository @Inject constructor(
                     following = user.following,
                 ),
             )
+            return true
         } catch (e: CancellationException) {
             throw e
         } catch (e: HttpException) {
@@ -103,9 +104,11 @@ class DefaultSessionRepository @Inject constructor(
                 accountSource.clear()
                 _expired.value = true
                 _session.value = null
+                return true
             }
+            return false
         } catch (_: Exception) {
-            // 保留本地会话
+            return false
         }
     }
 
