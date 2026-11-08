@@ -21,6 +21,9 @@ data object NotificationRoute : Route
 @Serializable
 data object ProfileRoute : Route
 
+@Serializable
+data object ProfileReposRoute : Route
+
 /** 共用详情路由 */
 @Serializable
 data class IssueDetailRoute(

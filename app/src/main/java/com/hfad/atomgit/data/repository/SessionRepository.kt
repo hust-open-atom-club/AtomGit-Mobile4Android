@@ -16,6 +16,9 @@ interface SessionRepository {
 
     suspend fun login(rawToken: String): LoginResult
 
+    /** 再读一次当前用户资料；未登录时无操作。网络失败保留本地会话。 */
+    suspend fun refreshProfile()
+
     suspend fun logout()
 }
 

@@ -10,8 +10,10 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.hfad.atomgit.ui.feed.FeedScreen
 import com.hfad.atomgit.ui.issue.IssueDetailScreen
 import com.hfad.atomgit.ui.notification.NotificationScreen
+import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
 
@@ -86,7 +89,11 @@ fun AtomGitNavHost(
                     entry<ProfileRoute> {
                         ProfileScreen(
                             listState = listStates.getValue(TopLevelTab.Profile),
+                            onOpenRepos = { navState.push(ProfileReposRoute) },
                         )
+                    }
+                    entry<ProfileReposRoute> {
+                        ProfileReposScreen(onBack = { navState.pop() })
                     }
                     entry<IssueDetailRoute> { route ->
                         IssueDetailScreen(
@@ -108,7 +115,11 @@ private fun AtomGitBottomBar(
     selected: TopLevelTab,
     onSelect: (TopLevelTab) -> Unit,
 ) {
-    NavigationBar {
+    val colors = MaterialTheme.colorScheme
+    NavigationBar(
+        containerColor = colors.surface,
+        contentColor = colors.onSurface,
+    ) {
         TopLevelTab.entries.forEach { tab ->
             NavigationBarItem(
                 selected = tab == selected,
@@ -120,6 +131,13 @@ private fun AtomGitBottomBar(
                     )
                 },
                 label = { Text(text = tab.label) },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = colors.onSurface,
+                    selectedTextColor = colors.onSurface,
+                    indicatorColor = colors.surfaceVariant,
+                    unselectedIconColor = colors.onSurfaceVariant,
+                    unselectedTextColor = colors.onSurfaceVariant,
+                ),
                 modifier = Modifier.testTag("tab-${tab.name}"),
             )
         }

@@ -14,6 +14,9 @@ data class UserDto(
     val name: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null,
     @SerialName("html_url") val htmlUrl: String? = null,
+    val bio: String? = null,
+    val followers: Int = 0,
+    val following: Int = 0,
 )
 
 @Serializable
