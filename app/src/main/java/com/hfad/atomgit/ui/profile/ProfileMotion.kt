@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 fun Pressable(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showRipple: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -32,7 +33,7 @@ fun Pressable(
             }
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(),
+                indication = if (showRipple) ripple() else null,
                 onClick = onClick,
             ),
     ) {

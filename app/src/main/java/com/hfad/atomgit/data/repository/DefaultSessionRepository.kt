@@ -68,6 +68,48 @@ class DefaultSessionRepository @Inject constructor(
         val session = stored.toAuthSession()
         accountSource.set(id = session.accountId, login = session.login)
         _session.value = session
+        refreshProfileLocked(stored)
+    }
+
+    override suspend fun refreshProfile(): Boolean = mutex.withLock {
+        if (_session.value == null) return@withLock true
+        val stored = store.read() ?: return@withLock true
+        refreshProfileLocked(stored)
+    }
+
+    /** 用已保存的令牌再读一次当前用户。失败时保留本地会话并返回 `false`。 */
+    private suspend fun refreshProfileLocked(stored: StoredSession): Boolean {
+        try {
+            val user = currentUserApi.currentUser()
+            accountSource.set(id = user.id, login = user.login)
+            _session.value = user.toAuthSession()
+            store.write(
+                stored.copy(
+                    accountId = user.id,
+                    login = user.login,
+                    name = user.name,
+                    avatarUrl = user.avatarUrl,
+                    bio = user.bio,
+                    followers = user.followers,
+                    following = user.following,
+                ),
+            )
+            return true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: HttpException) {
+            if (e.code() == 401) {
+                store.clear()
+                tokenProvider.clear()
+                accountSource.clear()
+                _expired.value = true
+                _session.value = null
+                return true
+            }
+            return false
+        } catch (_: Exception) {
+            return false
+        }
     }
 
     override suspend fun login(rawToken: String): LoginResult {
@@ -91,6 +133,9 @@ class DefaultSessionRepository @Inject constructor(
                             login = user.login,
                             name = user.name,
                             avatarUrl = user.avatarUrl,
+                            bio = user.bio,
+                            followers = user.followers,
+                            following = user.following,
                             ciphertext = encodeCiphertext(encrypted),
                             savedAt = System.currentTimeMillis(),
                         ),
@@ -111,6 +156,9 @@ class DefaultSessionRepository @Inject constructor(
                     login = user.login,
                     name = user.name,
                     avatarUrl = user.avatarUrl,
+                    bio = user.bio,
+                    followers = user.followers,
+                    following = user.following,
                 )
                 LoginResult.Success
             } catch (e: CancellationException) {
@@ -160,10 +208,23 @@ class DefaultSessionRepository @Inject constructor(
     private fun decodeCiphertext(text: String): ByteArray? =
         runCatching { Base64.decode(text) }.getOrNull()
 
+    private fun com.hfad.atomgit.data.remote.dto.UserDto.toAuthSession() = AuthSession(
+        accountId = id,
+        login = login,
+        name = name,
+        avatarUrl = avatarUrl,
+        bio = bio,
+        followers = followers,
+        following = following,
+    )
+
     private fun StoredSession.toAuthSession() = AuthSession(
         accountId = accountId,
         login = login,
         name = name,
         avatarUrl = avatarUrl,
+        bio = bio,
+        followers = followers,
+        following = following,
     )
 }

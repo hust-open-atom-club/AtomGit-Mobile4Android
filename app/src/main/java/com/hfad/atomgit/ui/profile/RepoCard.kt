@@ -1,5 +1,6 @@
 package com.hfad.atomgit.ui.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,27 +31,28 @@ fun RepoCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Pressable(onClick = onClick, modifier = modifier) {
+    Pressable(onClick = onClick, modifier = modifier, showRipple = false) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(10.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 1.dp,
-            shadowElevation = 1.dp,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OwnerMark(repo.owner)
                     Text(
                         text = repo.owner,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -59,43 +61,43 @@ fun RepoCard(
                 Text(
                     text = repo.name,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Star,
                             contentDescription = null,
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(14.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
                             text = repo.stars.toString(),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(5.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
+                                .size(8.dp)
                                 .clip(CircleShape)
                                 .background(repo.languageColor),
                         )
                         Text(
                             text = repo.language,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -109,15 +111,15 @@ fun RepoCard(
 private fun OwnerMark(owner: String) {
     Box(
         modifier = Modifier
-            .size(28.dp)
+            .size(20.dp)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.secondaryContainer),
+            .background(MaterialTheme.colorScheme.onSurface),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = owner.take(1).uppercase(),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.surface,
         )
     }
 }

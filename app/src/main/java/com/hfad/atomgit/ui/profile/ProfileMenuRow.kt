@@ -28,45 +28,46 @@ fun ProfileMenuRow(
     iconBackground: Color,
     title: String,
     count: String,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     icon: @Composable () -> Unit,
 ) {
-    Pressable(onClick = {}, modifier = modifier.fillMaxWidth()) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
+    Pressable(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .size(36.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(iconBackground),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            icon()
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(iconBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                icon()
+            }
+            Text(
+                text = title,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                text = count,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        Text(
-            text = title,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Text(
-            text = count,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
-    }
-    HorizontalDivider()
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 }
 
 @Composable
 fun MenuGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(18.dp)) {
+    Canvas(modifier.size(16.dp)) {
         val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
         drawRoundRect(
             color = color,
@@ -94,7 +95,7 @@ fun MenuGlyph(color: Color, modifier: Modifier = Modifier) {
 
 @Composable
 fun OrgGlyph(color: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier.size(18.dp)) {
+    Canvas(modifier.size(16.dp)) {
         val stroke = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
         drawRoundRect(
             color = color,

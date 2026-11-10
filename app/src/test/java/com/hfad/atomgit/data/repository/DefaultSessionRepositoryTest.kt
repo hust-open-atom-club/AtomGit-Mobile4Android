@@ -51,6 +51,24 @@ class DefaultSessionRepositoryTest {
 
     @Test
     fun restoreLoadsPersistedCiphertextIntoMemoryToken() = runTest {
+        api.user = UserDto(id = "u1", login = "alice", name = "Alice", bio = "hello")
+        store.session = storedSession(token = "pat-123")
+        val repository = repository()
+
+        repository.restore()
+
+        assertEquals(
+            AuthSession(accountId = "u1", login = "alice", name = "Alice", bio = "hello"),
+            repository.session.value,
+        )
+        assertEquals("hello", store.session?.bio)
+        assertEquals("pat-123", tokenProvider.getToken())
+        assertEquals(CurrentAccount(id = "u1", login = "alice"), accountSource.get())
+    }
+
+    @Test
+    fun restoreKeepsStoredSessionWhenProfileRefreshFails() = runTest {
+        api.error = IOException("offline")
         store.session = storedSession(token = "pat-123")
         val repository = repository()
 
@@ -61,7 +79,6 @@ class DefaultSessionRepositoryTest {
             repository.session.value,
         )
         assertEquals("pat-123", tokenProvider.getToken())
-        assertEquals(CurrentAccount(id = "u1", login = "alice"), accountSource.get())
     }
 
     @Test

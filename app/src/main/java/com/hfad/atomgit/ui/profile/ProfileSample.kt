@@ -17,11 +17,6 @@ data class SampleOrg(
 )
 
 object ProfileSample {
-    const val displayName = "二神"
-    const val login = "yesterdaylz"
-    const val status = "Out sick"
-    const val bio = "你们都是道爷的三尸"
-
     private val kotlinColor = Color(0xFFA97BFF)
     private val markdownColor = Color(0xFF083FA1)
 

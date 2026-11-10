@@ -6,4 +6,7 @@ data class AuthSession(
     val login: String,
     val name: String? = null,
     val avatarUrl: String? = null,
+    val bio: String? = null,
+    val followers: Int = 0,
+    val following: Int = 0,
 )

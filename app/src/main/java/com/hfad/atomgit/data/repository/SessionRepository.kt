@@ -16,6 +16,12 @@ interface SessionRepository {
 
     suspend fun login(rawToken: String): LoginResult
 
+    /**
+     * 再读一次当前用户资料。
+     * @return `true` 表示成功或无需刷新；`false` 表示失败且仍保留本地会话。
+     */
+    suspend fun refreshProfile(): Boolean
+
     suspend fun logout()
 }
 

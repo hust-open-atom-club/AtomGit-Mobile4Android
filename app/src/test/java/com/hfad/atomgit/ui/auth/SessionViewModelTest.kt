@@ -134,6 +134,8 @@ class SessionViewModelTest {
             return outcome
         }
 
+        override suspend fun refreshProfile(): Boolean = true
+
         override suspend fun logout() {
             logoutCalled = true
             session.value = null
