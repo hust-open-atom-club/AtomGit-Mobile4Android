@@ -1,6 +1,7 @@
 package com.hfad.atomgit.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.hfad.atomgit.data.model.FollowKind
 import kotlinx.serialization.Serializable
 
 /**
@@ -23,6 +24,12 @@ data object ProfileRoute : Route
 
 @Serializable
 data object ProfileReposRoute : Route
+
+@Serializable
+data class FollowListRoute(
+    val login: String,
+    val kind: FollowKind = FollowKind.Followers,
+) : Route
 
 /** 共用详情路由 */
 @Serializable
