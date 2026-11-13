@@ -1,8 +1,10 @@
 package com.hfad.atomgit.di
 
 import com.hfad.atomgit.data.repository.DefaultFeedRepository
+import com.hfad.atomgit.data.repository.DefaultFollowRepository
 import com.hfad.atomgit.data.repository.DefaultTodoRepository
 import com.hfad.atomgit.data.repository.FeedRepository
+import com.hfad.atomgit.data.repository.FollowRepository
 import com.hfad.atomgit.data.repository.TodoRepository
 import dagger.Binds
 import dagger.Module
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTodoRepository(impl: DefaultTodoRepository): TodoRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFollowRepository(impl: DefaultFollowRepository): FollowRepository
 }
