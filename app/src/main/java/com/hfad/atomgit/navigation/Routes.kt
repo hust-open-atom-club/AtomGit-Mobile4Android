@@ -31,6 +31,9 @@ data class FollowListRoute(
     val kind: FollowKind = FollowKind.Followers,
 ) : Route
 
+@Serializable
+data class UserProfileRoute(val login: String) : Route
+
 /** 共用详情路由 */
 @Serializable
 data class IssueDetailRoute(

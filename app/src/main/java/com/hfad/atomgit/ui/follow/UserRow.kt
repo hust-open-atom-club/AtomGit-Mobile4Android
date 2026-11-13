@@ -1,5 +1,6 @@
 package com.hfad.atomgit.ui.follow
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,16 +17,17 @@ import androidx.compose.ui.unit.dp
 import com.hfad.atomgit.data.model.UserSummary
 import com.hfad.atomgit.ui.components.Avatar
 
-/** 点击行为等他人资料页落地后再接 */
 @Composable
 fun UserRow(
     user: UserSummary,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val displayName = user.name ?: user.login
     ListItem(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .testTag("follow-row"),
         leadingContent = {
             Avatar(name = displayName, avatarUrl = user.avatarUrl, size = 40.dp)

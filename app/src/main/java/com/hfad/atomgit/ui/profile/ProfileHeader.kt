@@ -30,10 +30,10 @@ fun ProfileHeader(
     bio: String?,
     followers: Int,
     following: Int,
-    onSettingsClick: () -> Unit,
     onOpenFollowers: () -> Unit,
     onOpenFollowing: () -> Unit,
     modifier: Modifier = Modifier,
+    onSettingsClick: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
@@ -66,14 +66,16 @@ fun ProfileHeader(
                     )
                 }
             }
-            Pressable(onClick = onSettingsClick, showRipple = false) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = "设置",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .padding(8.dp),
-                )
+            onSettingsClick?.let { openSettings ->
+                Pressable(onClick = openSettings, showRipple = false) {
+                    Icon(
+                        imageVector = Icons.Outlined.Settings,
+                        contentDescription = "设置",
+                        modifier = Modifier
+                            .size(40.dp)
+                            .padding(8.dp),
+                    )
+                }
             }
         }
         val intro = bio?.takeIf { it.isNotBlank() }

@@ -33,6 +33,7 @@ import com.hfad.atomgit.ui.notification.NotificationScreen
 import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
+import com.hfad.atomgit.ui.user.UserProfileScreen
 
 /**
  * 单 Activity 的主导航。
@@ -102,6 +103,16 @@ fun AtomGitNavHost(
                             login = route.login,
                             kind = route.kind,
                             onBack = { navState.pop() },
+                            onOpenUser = { navState.push(UserProfileRoute(it)) },
+                        )
+                    }
+                    entry<UserProfileRoute> { route ->
+                        UserProfileScreen(
+                            login = route.login,
+                            onBack = { navState.pop() },
+                            onOpenFollow = { login, kind ->
+                                navState.push(FollowListRoute(login, kind))
+                            },
                         )
                     }
                     entry<IssueDetailRoute> { route ->

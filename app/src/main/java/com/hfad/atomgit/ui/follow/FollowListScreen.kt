@@ -36,6 +36,7 @@ fun FollowListScreen(
     login: String,
     kind: FollowKind,
     onBack: () -> Unit,
+    onOpenUser: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: FollowListViewModel = hiltViewModel(),
 ) {
@@ -94,6 +95,7 @@ fun FollowListScreen(
                 else -> FollowList(
                     state = state,
                     listState = listState,
+                    onOpenUser = onOpenUser,
                     onLoadMore = viewModel::loadMore,
                     onRetry = viewModel::retry,
                 )
@@ -106,6 +108,7 @@ fun FollowListScreen(
 private fun FollowList(
     state: FollowListUiState,
     listState: LazyListState,
+    onOpenUser: (String) -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
 ) {
@@ -119,7 +122,7 @@ private fun FollowList(
             items = state.items,
             key = { index, item -> if (item.login.isBlank()) "row-$index" else item.login },
         ) { _, user ->
-            UserRow(user = user)
+            UserRow(user = user, onClick = { onOpenUser(user.login) })
         }
         if (!state.endReached && !state.isLoading) {
             item(key = "follow-footer") {
