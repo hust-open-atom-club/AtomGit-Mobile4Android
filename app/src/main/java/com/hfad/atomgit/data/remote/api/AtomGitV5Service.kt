@@ -41,6 +41,36 @@ interface AtomGitV5Service {
     @GET("user")
     suspend fun getAuthenticatedUser(): UserDto
 
+    /** 他人资料。与 [getAuthenticatedUser] 同形，匿名可读。 */
+    @GET("users/{username}")
+    suspend fun getUser(
+        @Path("username") username: String,
+    ): UserDto
+
+    /** 他人的公开仓库。 */
+    @GET("users/{username}/repos")
+    suspend fun listUserRepos(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<RepoDto>>
+
+    /** 他人 star 了的仓库。 */
+    @GET("users/{username}/starred")
+    suspend fun listUserStarred(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<RepoDto>>
+
+    /** 他人所属组织。 */
+    @GET("users/{username}/orgs")
+    suspend fun listUserOrgs(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<OrgDto>>
+
     // endregion
 
     // region 粉丝与关注

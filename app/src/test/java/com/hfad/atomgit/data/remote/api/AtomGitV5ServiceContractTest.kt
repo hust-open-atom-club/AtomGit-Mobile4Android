@@ -301,4 +301,37 @@ class AtomGitV5ServiceContractTest {
         val second = api.listUserFollowing("J1113449", page = 2, perPage = 2).body()!!
         assertTrue(second.isEmpty())
     }
+
+    @Test
+    fun getUser_hitsUsersPathAndParsesProfile() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                    {
+                      "id": "6720b0463ed0887ef5d9918e",
+                      "login": "potato-security",
+                      "name": "土豆.exe",
+                      "followers": 1,
+                      "following": 0,
+                      "company": "",
+                      "location": "武汉",
+                      "top_languages": ["Java", "CSS"]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val user = api.getUser("potato-security")
+
+        assertEquals("potato-security", user.login)
+        assertEquals(1, user.followers)
+        assertEquals(listOf("Java", "CSS"), user.topLanguages)
+
+        val recorded = fixture.server.takeRequest()
+        assertEquals("GET", recorded.method)
+        assertEquals("/api/v5/users/potato-security", recorded.requestUrl?.encodedPath)
+        assertEquals("Bearer test-pat", recorded.getHeader("Authorization"))
+    }
 }
