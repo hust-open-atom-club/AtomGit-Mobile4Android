@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -120,7 +121,7 @@ fun UserProfileScreen(
                 text = error.orEmptyMessage(),
                 onRetry = viewModel::retry,
             )
-            else -> CenteredHint(text = "加载中…")
+            else -> CenteredProgress()
         }
     }
 }
@@ -226,6 +227,21 @@ private fun Panel(
         tonalElevation = 0.dp,
         content = content,
     )
+}
+
+@Composable
+private fun CenteredProgress() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(40.dp)
+                .testTag("user-profile-loading"),
+            strokeWidth = 4.dp,
+        )
+    }
 }
 
 @Composable
