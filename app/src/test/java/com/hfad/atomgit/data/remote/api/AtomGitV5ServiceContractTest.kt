@@ -227,4 +227,78 @@ class AtomGitV5ServiceContractTest {
         assertEquals("/api/v5/repos/o/r/issues/2/comments", recorded.path)
         assertEquals("""{"body":"hello"}""", recorded.body.readUtf8())
     }
+
+    /** 响应体取自 2026-11-13 的真实返回。 */
+    @Test
+    fun listUserFollowers_sendsPagingAndParsesMeasuredShape() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                    [{
+                      "avatar_url": "https://cdn-img.gitcode.com/ed/dc/e32d.png",
+                      "followers_url": "https://api.atomgit.com/api/v5/users/J1113449/followers",
+                      "html_url": "https://atomgit.com/J1113449",
+                      "id": "6a7760a0533376275c1e1ccd",
+                      "object_id": "6a7760a0533376275c1e1ccd",
+                      "login": "J1113449",
+                      "name": "北不选狙",
+                      "type": "User",
+                      "url": "https://api.atomgit.com/api/v5/users/J1113449"
+                    }]
+                    """.trimIndent(),
+                ),
+        )
+
+        val item = api.listUserFollowers("J1113449", page = 2, perPage = 2).body()!!.single()
+
+        assertEquals("6a7760a0533376275c1e1ccd", item.id)
+        assertEquals("6a7760a0533376275c1e1ccd", item.objectId)
+        assertEquals("User", item.type)
+        // 粉丝列表项实测没有 following_url，关注列表才有
+        assertNull(item.followingUrl)
+
+        val recorded = fixture.server.takeRequest()
+        assertEquals("GET", recorded.method)
+        assertEquals("/api/v5/users/J1113449/followers", recorded.requestUrl?.encodedPath)
+        assertEquals("2", recorded.requestUrl?.queryParameter("page"))
+        assertEquals("2", recorded.requestUrl?.queryParameter("per_page"))
+        assertEquals("Bearer test-pat", recorded.getHeader("Authorization"))
+        assertNull(recorded.requestUrl?.queryParameter("access_token"))
+    }
+
+    @Test
+    fun listUserFollowing_parsesFollowingUrlAndEmptyPage() = runTest {
+        fixture.server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """
+                    [{
+                      "followers_url": "https://api.atomgit.com/api/v5/users/potato-security/followers",
+                      "following_url": "https://api.atomgit.com/api/v5/users/potato-security/following",
+                      "html_url": "https://atomgit.com/potato-security",
+                      "id": "6720b0463ed0887ef5d9918e",
+                      "object_id": "6720b0463ed0887ef5d9918e",
+                      "login": "potato-security",
+                      "name": "土豆.exe",
+                      "type": "User",
+                      "url": "https://api.atomgit.com/api/v5/users/potato-security"
+                    }]
+                    """.trimIndent(),
+                ),
+        )
+        fixture.server.enqueue(MockResponse().setResponseCode(200).setBody("[]"))
+
+        val first = api.listUserFollowing("J1113449", page = 1, perPage = 2).body()!!.single()
+        assertEquals(
+            "https://api.atomgit.com/api/v5/users/potato-security/following",
+            first.followingUrl,
+        )
+
+        // 翻过末页实测返回空数组，终止条件就是这个
+        val second = api.listUserFollowing("J1113449", page = 2, perPage = 2).body()!!
+        assertTrue(second.isEmpty())
+    }
 }
