@@ -27,11 +27,13 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.hfad.atomgit.ui.feed.FeedScreen
+import com.hfad.atomgit.ui.follow.FollowListScreen
 import com.hfad.atomgit.ui.issue.IssueDetailScreen
 import com.hfad.atomgit.ui.notification.NotificationScreen
 import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
+import com.hfad.atomgit.ui.user.UserProfileScreen
 
 /**
  * 单 Activity 的主导航。
@@ -90,10 +92,28 @@ fun AtomGitNavHost(
                         ProfileScreen(
                             listState = listStates.getValue(TopLevelTab.Profile),
                             onOpenRepos = { navState.push(ProfileReposRoute) },
+                            onOpenFollow = { login, kind -> navState.push(FollowListRoute(login, kind)) },
                         )
                     }
                     entry<ProfileReposRoute> {
                         ProfileReposScreen(onBack = { navState.pop() })
+                    }
+                    entry<FollowListRoute> { route ->
+                        FollowListScreen(
+                            login = route.login,
+                            kind = route.kind,
+                            onBack = { navState.pop() },
+                            onOpenUser = { navState.push(UserProfileRoute(it)) },
+                        )
+                    }
+                    entry<UserProfileRoute> { route ->
+                        UserProfileScreen(
+                            login = route.login,
+                            onBack = { navState.pop() },
+                            onOpenFollow = { login, kind ->
+                                navState.push(FollowListRoute(login, kind))
+                            },
+                        )
                     }
                     entry<IssueDetailRoute> { route ->
                         IssueDetailScreen(

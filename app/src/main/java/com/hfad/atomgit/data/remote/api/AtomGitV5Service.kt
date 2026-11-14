@@ -21,6 +21,7 @@ import com.hfad.atomgit.data.remote.dto.RepoEventsResponseDto
 import com.hfad.atomgit.data.remote.dto.TagDto
 import com.hfad.atomgit.data.remote.dto.UserDto
 import com.hfad.atomgit.data.remote.dto.UserEventsResponseDto
+import com.hfad.atomgit.data.remote.dto.UserSummaryDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -39,6 +40,59 @@ interface AtomGitV5Service {
 
     @GET("user")
     suspend fun getAuthenticatedUser(): UserDto
+
+    /** 他人资料。与 [getAuthenticatedUser] 同形，匿名可读。 */
+    @GET("users/{username}")
+    suspend fun getUser(
+        @Path("username") username: String,
+    ): UserDto
+
+    /** 他人的公开仓库。 */
+    @GET("users/{username}/repos")
+    suspend fun listUserRepos(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<RepoDto>>
+
+    /** 他人 star 了的仓库。 */
+    @GET("users/{username}/starred")
+    suspend fun listUserStarred(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<RepoDto>>
+
+    /** 他人所属组织。 */
+    @GET("users/{username}/orgs")
+    suspend fun listUserOrgs(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<OrgDto>>
+
+    // endregion
+
+    // region 粉丝与关注
+
+    /**
+     * 只读列表。实测匿名也可读、空列表返回 `[]`、用户不存在返回 404。
+     * 返回 [Response] 是为了读 `total_count` / `total_page` 头；头缺失时总数不可信。
+     */
+    @GET("users/{username}/followers")
+    suspend fun listUserFollowers(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<UserSummaryDto>>
+
+    /** 与粉丝列表只差一个 `following_url`；两者共用 [UserSummaryDto]。 */
+    @GET("users/{username}/following")
+    suspend fun listUserFollowing(
+        @Path("username") username: String,
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int,
+    ): Response<List<UserSummaryDto>>
 
     // endregion
 

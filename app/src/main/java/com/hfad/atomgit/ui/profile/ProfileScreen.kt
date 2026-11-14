@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hfad.atomgit.data.model.FollowKind
 
 /**
  * 我的入口。资料、项目和组织用本页示例数据；除退出登录外，点击只做按压或展开。
@@ -44,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun ProfileScreen(
     listState: LazyListState,
     onOpenRepos: () -> Unit,
+    onOpenFollow: (login: String, kind: FollowKind) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -86,6 +88,16 @@ fun ProfileScreen(
                             followers = session?.followers ?: 0,
                             following = session?.following ?: 0,
                             onSettingsClick = {},
+                            onOpenFollowers = {
+                                session?.login
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { onOpenFollow(it, FollowKind.Followers) }
+                            },
+                            onOpenFollowing = {
+                                session?.login
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { onOpenFollow(it, FollowKind.Following) }
+                            },
                         )
                     }
                 }
