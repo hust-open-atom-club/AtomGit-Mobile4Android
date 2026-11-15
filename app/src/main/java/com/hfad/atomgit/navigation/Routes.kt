@@ -34,6 +34,9 @@ data class FollowListRoute(
 @Serializable
 data class UserProfileRoute(val login: String) : Route
 
+@Serializable
+data object SettingsRoute : Route
+
 /** 共用详情路由 */
 @Serializable
 data class IssueDetailRoute(

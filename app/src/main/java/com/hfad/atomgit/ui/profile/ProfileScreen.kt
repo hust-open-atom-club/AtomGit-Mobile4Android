@@ -22,7 +22,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,7 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.FollowKind
 
 /**
- * 我的入口。资料、项目和组织用本页示例数据；除退出登录外，点击只做按压或展开。
+ * 我的入口。资料、项目和组织用本页示例数据；设置与仓库可跳转，其余点击只做按压或展开。
  * 上板块贴顶，以「热门」为界拆成上下两块白底面板。
  */
 @Composable
@@ -46,6 +45,7 @@ fun ProfileScreen(
     listState: LazyListState,
     onOpenRepos: () -> Unit,
     onOpenFollow: (login: String, kind: FollowKind) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -87,7 +87,7 @@ fun ProfileScreen(
                             bio = session?.bio,
                             followers = session?.followers ?: 0,
                             following = session?.following ?: 0,
-                            onSettingsClick = {},
+                            onSettingsClick = onOpenSettings,
                             onOpenFollowers = {
                                 session?.login
                                     ?.takeIf { it.isNotBlank() }
@@ -144,14 +144,6 @@ fun ProfileScreen(
                                     )
                                 },
                             )
-                            TextButton(
-                                onClick = viewModel::logout,
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    .testTag("profile-logout"),
-                            ) {
-                                Text("退出登录", color = MaterialTheme.colorScheme.error)
-                            }
                         }
                     }
                 }

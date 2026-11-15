@@ -32,6 +32,7 @@ import com.hfad.atomgit.ui.issue.IssueDetailScreen
 import com.hfad.atomgit.ui.notification.NotificationScreen
 import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
+import com.hfad.atomgit.ui.settings.SettingsScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
 import com.hfad.atomgit.ui.user.UserProfileScreen
 
@@ -93,6 +94,7 @@ fun AtomGitNavHost(
                             listState = listStates.getValue(TopLevelTab.Profile),
                             onOpenRepos = { navState.push(ProfileReposRoute) },
                             onOpenFollow = { login, kind -> navState.push(FollowListRoute(login, kind)) },
+                            onOpenSettings = { navState.push(SettingsRoute) },
                         )
                     }
                     entry<ProfileReposRoute> {
@@ -114,6 +116,9 @@ fun AtomGitNavHost(
                                 navState.push(FollowListRoute(login, kind))
                             },
                         )
+                    }
+                    entry<SettingsRoute> {
+                        SettingsScreen(onBack = { navState.pop() })
                     }
                     entry<IssueDetailRoute> { route ->
                         IssueDetailScreen(
