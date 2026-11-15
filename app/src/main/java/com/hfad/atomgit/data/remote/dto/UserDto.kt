@@ -15,8 +15,15 @@ data class UserDto(
     @SerialName("avatar_url") val avatarUrl: String? = null,
     @SerialName("html_url") val htmlUrl: String? = null,
     val bio: String? = null,
+    /** 与 [bio] 实测同值，某些用户只有其中一个有内容。 */
+    val description: String? = null,
     val followers: Int = 0,
     val following: Int = 0,
+    val blog: String? = null,
+    val company: String? = null,
+    val location: String? = null,
+    val website: String? = null,
+    @SerialName("top_languages") val topLanguages: List<String> = emptyList(),
 )
 
 @Serializable

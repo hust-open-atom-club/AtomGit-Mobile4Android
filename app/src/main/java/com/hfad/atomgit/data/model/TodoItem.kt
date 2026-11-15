@@ -40,12 +40,5 @@ data class TodoItem(
         get() = "$accountId|${repoPath.orEmpty()}|$kind|$number"
 }
 
-/**
- * 待办分页结果。头缺失时 [totalCount] / [totalPage] 为 null，不能当成 0。
- * 空 [items] 表示没有下一页。
- */
-data class TodoPage(
-    val items: List<TodoItem>,
-    val totalCount: Long?,
-    val totalPage: Int?,
-)
+/** 待办分页结果，形状与其它页码列表一致 */
+typealias TodoPage = PagedItems<TodoItem>
