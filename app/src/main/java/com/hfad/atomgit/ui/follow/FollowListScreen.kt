@@ -19,6 +19,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +31,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.FollowKind
 import com.hfad.atomgit.data.remote.error.ApiError
+import com.hfad.atomgit.ui.components.AtomPullRefreshIndicator
 
 @Composable
 fun FollowListScreen(
@@ -79,10 +81,18 @@ fun FollowListScreen(
             }
         }
 
+        val pullRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
             isRefreshing = state.isLoading,
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
+            state = pullRefreshState,
+            indicator = {
+                AtomPullRefreshIndicator(
+                    state = pullRefreshState,
+                    isRefreshing = state.isLoading,
+                )
+            },
         ) {
             val error = state.error
             when {

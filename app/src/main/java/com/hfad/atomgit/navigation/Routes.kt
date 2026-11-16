@@ -37,6 +37,18 @@ data class UserProfileRoute(val login: String) : Route
 @Serializable
 data object SettingsRoute : Route
 
+@Serializable
+data object CodeViewerSettingsRoute : Route
+
+@Serializable
+data class CodeViewerRoute(
+    val owner: String = "",
+    val repo: String = "",
+    val path: String = "",
+    val ref: String = "HEAD",
+    val sample: Boolean = false,
+) : Route
+
 /** 共用详情路由 */
 @Serializable
 data class IssueDetailRoute(

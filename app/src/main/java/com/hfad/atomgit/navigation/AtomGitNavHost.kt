@@ -26,6 +26,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.hfad.atomgit.ui.code.CodeViewerScreen
+import com.hfad.atomgit.ui.code.CodeViewerSettingsScreen
 import com.hfad.atomgit.ui.feed.FeedScreen
 import com.hfad.atomgit.ui.follow.FollowListScreen
 import com.hfad.atomgit.ui.issue.IssueDetailScreen
@@ -118,7 +120,29 @@ fun AtomGitNavHost(
                         )
                     }
                     entry<SettingsRoute> {
-                        SettingsScreen(onBack = { navState.pop() })
+                        SettingsScreen(
+                            onBack = { navState.pop() },
+                            onOpenCodeSettings = { navState.push(CodeViewerSettingsRoute) },
+                        )
+                    }
+                    entry<CodeViewerSettingsRoute> {
+                        CodeViewerSettingsScreen(
+                            onBack = { navState.pop() },
+                            onOpenSample = {
+                                navState.push(CodeViewerRoute(sample = true))
+                            },
+                        )
+                    }
+                    entry<CodeViewerRoute> { route ->
+                        CodeViewerScreen(
+                            owner = route.owner,
+                            repo = route.repo,
+                            path = route.path,
+                            ref = route.ref,
+                            sample = route.sample,
+                            onBack = { navState.pop() },
+                            onOpenSettings = { navState.push(CodeViewerSettingsRoute) },
+                        )
                     }
                     entry<IssueDetailRoute> { route ->
                         IssueDetailScreen(

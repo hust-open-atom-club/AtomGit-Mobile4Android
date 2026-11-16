@@ -23,6 +23,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.FollowKind
+import com.hfad.atomgit.ui.components.AtomPullRefreshIndicator
 
 /**
  * 我的入口。资料、项目和组织用本页示例数据；设置与仓库可跳转，其余点击只做按压或展开。
@@ -67,10 +69,18 @@ fun ProfileScreen(
             .background(pageBackground)
             .testTag("screen-profile"),
     ) {
+        val pullRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = viewModel::refresh,
             modifier = Modifier.fillMaxSize(),
+            state = pullRefreshState,
+            indicator = {
+                AtomPullRefreshIndicator(
+                    state = pullRefreshState,
+                    isRefreshing = refreshing,
+                )
+            },
         ) {
             LazyColumn(
                 state = listState,
