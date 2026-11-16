@@ -1,8 +1,8 @@
 package com.hfad.atomgit.data.repository
 
+import okio.ByteString.Companion.encodeUtf8
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.Base64
 
 class RepoContentDecodingTest {
 
@@ -21,7 +21,7 @@ class RepoContentDecodingTest {
     @Test
     fun decodeBase64Content() {
         val plain = "fun main() {}\n"
-        val encoded = Base64.getEncoder().encodeToString(plain.toByteArray())
+        val encoded = plain.encodeUtf8().base64()
         val wrapped = encoded.chunked(4).joinToString("\n")
 
         assertEquals(plain, decodeFileContent(wrapped, "base64"))

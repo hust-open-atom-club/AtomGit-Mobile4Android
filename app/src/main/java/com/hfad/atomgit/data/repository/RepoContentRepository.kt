@@ -4,8 +4,8 @@ import com.hfad.atomgit.data.model.RepoFileContent
 import com.hfad.atomgit.data.remote.api.AtomGitV5Service
 import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.remote.error.apiCall
+import okio.ByteString.Companion.decodeBase64
 import java.nio.charset.StandardCharsets
-import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -65,9 +65,6 @@ internal fun decodeFileContent(raw: String, encoding: String?): String {
     val normalized = encoding?.lowercase()?.trim()
     if (normalized != null && normalized != "base64") return raw
     val compact = raw.replace("\\s".toRegex(), "")
-    return try {
-        String(Base64.getDecoder().decode(compact), StandardCharsets.UTF_8)
-    } catch (_: IllegalArgumentException) {
-        raw
-    }
+    // 用 Okio，避免 java.util.Base64（API 26+）在 minSdk 24 上触发 Lint NewApi
+    return compact.decodeBase64()?.utf8() ?: raw
 }
