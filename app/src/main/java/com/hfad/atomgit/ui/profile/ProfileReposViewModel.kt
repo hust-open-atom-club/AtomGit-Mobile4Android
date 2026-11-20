@@ -23,7 +23,7 @@ private const val SearchDebounceMillis = 300L
 data class ProfileReposUiState(
     val query: String = "",
     val visibility: RepoVisibility = RepoVisibility.All,
-    val sort: RepoSort = RepoSort.UpdatedDesc,
+    val sort: RepoSort = RepoSort.PushedDesc,
     val items: List<RepoSummary> = emptyList(),
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
