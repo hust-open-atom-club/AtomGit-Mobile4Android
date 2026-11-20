@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -54,6 +55,7 @@ import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.ui.components.AtomPullRefreshIndicator
 import com.hfad.atomgit.ui.components.CenteredMessage
 import com.hfad.atomgit.ui.components.LoadMoreFooter
+import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
 
 @Composable
 fun ProfileReposScreen(
@@ -67,6 +69,11 @@ fun ProfileReposScreen(
     var searching by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val filterMenuColor = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        RepoFilterMenuDark
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     LaunchedEffect(searching) {
         if (searching) focusRequester.requestFocus()
@@ -172,7 +179,7 @@ fun ProfileReposScreen(
                     expanded = visibilityExpanded,
                     onDismissRequest = { visibilityExpanded = false },
                     shape = RoundedCornerShape(12.dp),
-                    containerColor = MaterialTheme.colorScheme.surface,
+                    containerColor = filterMenuColor,
                     tonalElevation = 0.dp,
                     shadowElevation = 6.dp,
                 ) {

@@ -22,3 +22,11 @@ val HairlineDark = Color(0xFF2C2C2C)
 val IndicatorDark = Color(0xFF2A2A2A)
 val AccentBlueDark = Color(0xFF8AB4F8)
 val AccentBlueContainerDark = Color(0xFF1A3A5C)
+
+// 仓库排序抽屉
+val SheetDark = Color(0xFF050505)
+val SheetCardDark = Color(0xFF17181C)
+val SheetMutedDark = Color(0xFF74747E)
+
+// 仓库列表下拉菜单
+val RepoFilterMenuDark = Color(0xFF2E2E36)
