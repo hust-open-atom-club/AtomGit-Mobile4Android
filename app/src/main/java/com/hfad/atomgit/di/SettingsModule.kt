@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.hfad.atomgit.data.repository.CodeViewerPreferencesRepository
+import com.hfad.atomgit.data.repository.DefaultCodeViewerPreferencesRepository
 import com.hfad.atomgit.data.repository.DefaultThemePreferencesRepository
 import com.hfad.atomgit.data.repository.ThemePreferencesRepository
 import dagger.Binds
@@ -20,6 +22,10 @@ import javax.inject.Singleton
 @Retention(AnnotationRetention.BINARY)
 annotation class ThemePreferences
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class CodeViewerPreferencesStore
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class SettingsModule {
@@ -30,6 +36,12 @@ abstract class SettingsModule {
         impl: DefaultThemePreferencesRepository,
     ): ThemePreferencesRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindCodeViewerPreferencesRepository(
+        impl: DefaultCodeViewerPreferencesRepository,
+    ): CodeViewerPreferencesRepository
+
     companion object {
         @Provides
         @Singleton
@@ -38,6 +50,15 @@ abstract class SettingsModule {
             @ApplicationContext context: Context,
         ): DataStore<Preferences> = PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile("theme_preferences") },
+        )
+
+        @Provides
+        @Singleton
+        @CodeViewerPreferencesStore
+        fun provideCodeViewerPreferencesDataStore(
+            @ApplicationContext context: Context,
+        ): DataStore<Preferences> = PreferenceDataStoreFactory.create(
+            produceFile = { context.preferencesDataStoreFile("code_viewer_preferences") },
         )
     }
 }

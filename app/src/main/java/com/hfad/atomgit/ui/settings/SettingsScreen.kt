@@ -44,11 +44,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.ThemeMode
 import com.hfad.atomgit.ui.profile.Pressable
+import com.hfad.atomgit.ui.theme.AccentBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenCodeSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -100,7 +102,18 @@ fun SettingsScreen(
                         onClick = { showThemeSheet = true },
                         modifier = Modifier.testTag("settings-theme"),
                     )
-                    SettingsPlaceholderRow(title = "代码", showDivider = false)
+                    Pressable(
+                        onClick = onOpenCodeSettings,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("settings-code"),
+                    ) {
+                        Text(
+                            text = "代码",
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                        )
+                    }
                 }
                 SettingsSection(title = "账号") {
                     SettingsPlaceholderRow(title = "账号信息")
@@ -172,7 +185,7 @@ fun SettingsScreen(
                                     showThemeSheet = false
                                 },
                                 colors = RadioButtonDefaults.colors(
-                                    selectedColor = ThemeSelectedBlue,
+                                    selectedColor = AccentBlue,
                                 ),
                             )
                         }
@@ -291,8 +304,6 @@ private fun SettingsPlaceholderRow(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
-
-private val ThemeSelectedBlue = Color(0xFF1A73E8)
 
 private val ThemeSheetOptions = listOf(
     ThemeMode.Light,
