@@ -27,12 +27,21 @@ data class RepoDto(
     @SerialName("updated_at") val updatedAt: String? = null,
     val fork: Boolean? = null,
     val namespace: NamespaceDto? = null,
+    val owner: RepoOwnerDto? = null,
 )
 
 @Serializable
 data class NamespaceDto(
     val path: String? = null,
     val name: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
+)
+
+@Serializable
+data class RepoOwnerDto(
+    val login: String? = null,
+    val name: String? = null,
+    @SerialName("avatar_url") val avatarUrl: String? = null,
 )
 
 @Serializable

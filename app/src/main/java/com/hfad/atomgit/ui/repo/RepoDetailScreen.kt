@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -21,9 +22,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -56,12 +55,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hfad.atomgit.R
 import com.hfad.atomgit.data.model.CommitSummary
 import com.hfad.atomgit.data.model.RepoEntryKind
 import com.hfad.atomgit.data.model.RepoRef
@@ -152,26 +152,6 @@ internal fun RepoDetailContent(
                 detail == null && state.isLoading -> LoadingPane()
                 detail == null && state.error != null -> ErrorPane(state.error.message("仓库不存在或无权访问"), onRetryHeader)
                 detail != null -> {
-                    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(detail.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            if (detail.isPrivate) Icon(Icons.Outlined.Lock, "私有仓库", modifier = Modifier.size(18.dp))
-                        }
-                        detail.description?.let {
-                            Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Outlined.Star, null, Modifier.size(16.dp), tint = Color(0xFFF5C518))
-                            Text("${detail.stars}", style = MaterialTheme.typography.bodySmall)
-                            detail.defaultBranch?.let { Text("默认分支：$it", modifier = Modifier.padding(start = 12.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
-                        }
-                        if (state.error != null) InlineError(state.error.message("仓库信息暂时不可用"), onRetryHeader)
-                    }
-                    SecondaryTabRow(selectedTabIndex = state.tab.ordinal, containerColor = Color.Transparent) {
-                        RepoDetailTab.entries.forEach { tab ->
-                            Tab(selected = state.tab == tab, onClick = { onTab(tab) }, text = { Text(tab.label) }, modifier = Modifier.testTag("repo-tab-${tab.name}"))
-                        }
-                    }
                     val holder = rememberSaveableStateHolder()
                     val revision = state.selectedRef
                     val versionKey = "${revision?.kind}:${revision?.name}"
@@ -180,15 +160,70 @@ internal fun RepoDetailContent(
                         RepoDetailTab.Commits -> "commits:$versionKey"
                         else -> state.tab.name
                     }
-                    Box(Modifier.weight(1f)) {
-                        key(listKey) {
-                            holder.SaveableStateProvider(listKey) {
-                                val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+                    key(listKey) {
+                        holder.SaveableStateProvider(listKey) {
+                            val listState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                                contentPadding = PaddingValues(bottom = 16.dp),
+                            ) {
+                                item(key = "detail-header") {
+                                    RepoDetailHeader(detail)
+                                    if (state.error != null) {
+                                        InlineError(state.error.message("仓库信息暂时不可用"), onRetryHeader)
+                                    }
+                                }
+                                stickyHeader(key = "detail-tabs") {
+                                    Surface(color = MaterialTheme.colorScheme.surface) {
+                                        SecondaryTabRow(
+                                            selectedTabIndex = state.tab.ordinal,
+                                            containerColor = Color.Transparent,
+                                        ) {
+                                            RepoDetailTab.entries.forEach { tab ->
+                                                Tab(
+                                                    selected = state.tab == tab,
+                                                    onClick = { onTab(tab) },
+                                                    text = { Text(tab.label) },
+                                                    modifier = Modifier.testTag("repo-tab-${tab.name}"),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 when (state.tab) {
-                                    RepoDetailTab.Files -> FilesPane(state, listState, onDirectory, onOpenFile, onRetry, onRetryReadme, { onTab(RepoDetailTab.Branches) }, { notice = "暂不支持预览此类型，请在网页查看" })
-                                    RepoDetailTab.Commits -> PagedPane(state.commits, listState, "暂无提交", onRetry, onLoadMore, { it.sha }) { CommitRow(it) }
-                                    RepoDetailTab.Branches -> PagedPane(state.branches, listState, "暂无分支", onRetry, onLoadMore, { it.name }) { RefRow(it, state, onRef) }
-                                    RepoDetailTab.Tags -> PagedPane(state.tags, listState, "暂无标签", onRetry, onLoadMore, { it.name }) { RefRow(it, state, onRef) }
+                                    RepoDetailTab.Files -> filesItems(
+                                        state = state,
+                                        onDirectory = onDirectory,
+                                        onFile = onOpenFile,
+                                        onRetry = onRetry,
+                                        onRetryReadme = onRetryReadme,
+                                        onChooseRef = { onTab(RepoDetailTab.Branches) },
+                                        onUnsupported = { notice = "暂不支持预览此类型，请在网页查看" },
+                                    )
+                                    RepoDetailTab.Commits -> pagedItems(
+                                        page = state.commits,
+                                        empty = "暂无提交",
+                                        onRetry = onRetry,
+                                        onLoadMore = onLoadMore,
+                                        itemKey = { it.sha },
+                                    ) { CommitRow(it) }
+                                    RepoDetailTab.Branches -> pagedItems(
+                                        page = state.branches,
+                                        empty = "暂无分支",
+                                        onRetry = onRetry,
+                                        onLoadMore = onLoadMore,
+                                        itemKey = { it.name },
+                                    ) { RefRow(it, state, onRef) }
+                                    RepoDetailTab.Tags -> pagedItems(
+                                        page = state.tags,
+                                        empty = "暂无标签",
+                                        onRetry = onRetry,
+                                        onLoadMore = onLoadMore,
+                                        itemKey = { it.name },
+                                    ) { RefRow(it, state, onRef) }
                                 }
                             }
                         }
@@ -202,10 +237,8 @@ internal fun RepoDetailContent(
     }
 }
 
-@Composable
-private fun FilesPane(
+private fun LazyListScope.filesItems(
     state: RepoDetailUiState,
-    listState: LazyListState,
     onDirectory: (String) -> Unit,
     onFile: (String) -> Unit,
     onRetry: () -> Unit,
@@ -213,57 +246,70 @@ private fun FilesPane(
     onChooseRef: () -> Unit,
     onUnsupported: () -> Unit,
 ) {
-    Column {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onChooseRef, modifier = Modifier.testTag("repo-choose-ref")) {
-                Text("${if (state.selectedRef?.kind == RepoRefKind.Tag) "标签" else "分支"}：${state.selectedRef?.name.orEmpty()}", maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                Icon(Icons.Outlined.KeyboardArrowDown, null, Modifier.size(18.dp))
-            }
-        }
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = { onDirectory("") }) { Text("根目录") }
-            val segments = state.files.path.split('/').filter { it.isNotEmpty() }
-            segments.forEachIndexed { index, segment ->
-                Text("/", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = { onDirectory(segments.take(index + 1).joinToString("/")) }) { Text(segment) }
-            }
-        }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        when {
-            state.files.isLoading -> LoadingPane()
-            state.files.error != null -> ErrorPane(state.files.error.message("目录或版本不存在"), onRetry)
-            else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("repo-files"), contentPadding = PaddingValues(bottom = 16.dp)) {
-                if (state.files.entries.isEmpty()) item { EmptyPane("当前目录为空") }
-                items(state.files.entries, key = { it.path }) { entry ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            when (entry.kind) {
-                                RepoEntryKind.Directory -> onDirectory(entry.path)
-                                RepoEntryKind.File -> onFile(entry.path)
-                                RepoEntryKind.Unsupported -> onUnsupported()
-                            }
-                        }.padding(horizontal = 16.dp, vertical = 16.dp).testTag("repo-entry:${entry.path}"),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        Icon(if (entry.kind == RepoEntryKind.Directory) FolderIcon else FileIcon, null, Modifier.size(22.dp), tint = if (entry.kind == RepoEntryKind.Directory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(entry.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (entry.kind == RepoEntryKind.Directory) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    item(key = "files-refbar") {
+        Column {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onChooseRef, modifier = Modifier.testTag("repo-choose-ref")) {
+                    Text("${if (state.selectedRef?.kind == RepoRefKind.Tag) "标签" else "分支"}：${state.selectedRef?.name.orEmpty()}", maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Icon(Icons.Outlined.KeyboardArrowDown, null, Modifier.size(18.dp))
                 }
-                if (state.files.path.isEmpty()) {
-                    val readme = state.readme
-                    if (readme.isLoading || readme.preview != null || readme.error != null) item(key = "readme-preview") {
-                        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Text(readme.path?.substringAfterLast('/') ?: "README", style = MaterialTheme.typography.titleMedium)
-                            when {
-                                readme.isLoading -> CircularProgressIndicator(Modifier.size(24.dp))
-                                readme.error != null -> InlineError(readme.error.message("README 不存在"), onRetryReadme)
-                                else -> {
-                                    Text(readme.preview.orEmpty().ifEmpty { "文件内容为空" }, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, maxLines = 30, overflow = TextOverflow.Ellipsis)
-                                    readme.path?.let { path -> TextButton(onClick = { onFile(path) }) { Text("查看全文") } }
-                                }
+            }
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { onDirectory("") }) { Text("根目录") }
+                val segments = state.files.path.split('/').filter { it.isNotEmpty() }
+                segments.forEachIndexed { index, segment ->
+                    Text("/", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { onDirectory(segments.take(index + 1).joinToString("/")) }) { Text(segment) }
+                }
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+    }
+    when {
+        state.files.isLoading -> item(key = "files-loading") { PaneLoading() }
+        state.files.error != null -> item(key = "files-error") { PaneError(state.files.error.message("目录或版本不存在"), onRetry) }
+        else -> {
+            if (state.files.entries.isEmpty()) item(key = "files-empty") { EmptyPane("当前目录为空") }
+            items(state.files.entries, key = { it.path }) { entry ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().clickable {
+                        when (entry.kind) {
+                            RepoEntryKind.Directory -> onDirectory(entry.path)
+                            RepoEntryKind.File -> onFile(entry.path)
+                            RepoEntryKind.Unsupported -> onUnsupported()
+                        }
+                    }.padding(horizontal = 16.dp, vertical = 16.dp).testTag("repo-entry:${entry.path}"),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (entry.kind == RepoEntryKind.Directory) {
+                                R.drawable.ic_repo_folder
+                            } else {
+                                R.drawable.ic_repo_file
+                            },
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = if (entry.kind == RepoEntryKind.Directory) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(entry.name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (entry.kind == RepoEntryKind.Directory) Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
+            if (state.files.path.isEmpty()) {
+                val readme = state.readme
+                if (readme.isLoading || readme.preview != null || readme.error != null) item(key = "readme-preview") {
+                    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(readme.path?.substringAfterLast('/') ?: "README", style = MaterialTheme.typography.titleMedium)
+                        when {
+                            readme.isLoading -> CircularProgressIndicator(Modifier.size(24.dp))
+                            readme.error != null -> InlineError(readme.error.message("README 不存在"), onRetryReadme)
+                            else -> {
+                                Text(readme.preview.orEmpty().ifEmpty { "文件内容为空" }, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, maxLines = 30, overflow = TextOverflow.Ellipsis)
+                                readme.path?.let { path -> TextButton(onClick = { onFile(path) }) { Text("查看全文") } }
                             }
                         }
                     }
@@ -273,10 +319,8 @@ private fun FilesPane(
     }
 }
 
-@Composable
-private fun <T> PagedPane(
+private fun <T> LazyListScope.pagedItems(
     page: RepoPageState<T>,
-    listState: LazyListState,
     empty: String,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
@@ -284,10 +328,10 @@ private fun <T> PagedPane(
     row: @Composable (T) -> Unit,
 ) {
     when {
-        page.isLoading && page.items.isEmpty() -> LoadingPane()
-        page.error != null && page.items.isEmpty() -> ErrorPane(page.error.message("仓库或版本不存在"), onRetry)
-        page.loaded && page.items.isEmpty() -> EmptyPane(empty)
-        else -> LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
+        page.isLoading && page.items.isEmpty() -> item(key = "paged-loading") { PaneLoading() }
+        page.error != null && page.items.isEmpty() -> item(key = "paged-error") { PaneError(page.error.message("仓库或版本不存在"), onRetry) }
+        page.loaded && page.items.isEmpty() -> item(key = "paged-empty") { EmptyPane(empty) }
+        else -> {
             items(page.items, key = itemKey) {
                 row(it)
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -329,6 +373,21 @@ private fun RefRow(ref: RepoRef, state: RepoDetailUiState, onRef: (RepoRef) -> U
 @Composable
 private fun LoadingPane() { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() } }
 
+/** 列表 item 时用的加载态 */
+@Composable
+private fun PaneLoading() {
+    Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(Modifier.size(28.dp))
+    }
+}
+
+@Composable
+private fun PaneError(message: String, onRetry: () -> Unit) {
+    Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
+        InlineError(message, onRetry)
+    }
+}
+
 @Composable
 private fun EmptyPane(text: String) { Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
 
@@ -354,17 +413,3 @@ private fun ApiError.message(notFound: String): String = when (this) {
     is ApiError.RateLimited -> "请求过于频繁，请稍后重试"
     else -> "加载失败，请稍后重试"
 }
-
-private val FolderIcon = ImageVector.Builder("RepoFolder", 24.dp, 24.dp, 24f, 24f).apply {
-    path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 1.6f) {
-        moveTo(3f, 6f); lineTo(9f, 6f); lineTo(11f, 8f); lineTo(21f, 8f)
-        lineTo(21f, 19f); lineTo(3f, 19f); close()
-    }
-}.build()
-
-private val FileIcon = ImageVector.Builder("RepoFile", 24.dp, 24.dp, 24f, 24f).apply {
-    path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 1.6f) {
-        moveTo(5f, 3f); lineTo(14f, 3f); lineTo(19f, 8f); lineTo(19f, 21f)
-        lineTo(5f, 21f); close(); moveTo(14f, 3f); lineTo(14f, 8f); lineTo(19f, 8f)
-    }
-}.build()

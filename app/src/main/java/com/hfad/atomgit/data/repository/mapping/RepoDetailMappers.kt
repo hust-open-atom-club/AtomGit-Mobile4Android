@@ -21,6 +21,9 @@ internal fun RepoDto.toRepoDetail(owner: String, repo: String) = RepoDetail(
     isPrivate = isPrivate == true,
     defaultBranch = defaultBranch?.takeIf { it.isNotBlank() },
     htmlUrl = htmlUrl?.takeIf { it.isNotBlank() } ?: webUrl?.takeIf { it.isNotBlank() },
+    ownerName = this.owner?.name?.takeIf { it.isNotBlank() } ?: namespace?.name?.takeIf { it.isNotBlank() },
+    ownerAvatarUrl = this.owner?.avatarUrl?.takeIf { it.isNotBlank() } ?: namespace?.avatarUrl?.takeIf { it.isNotBlank() },
+    forks = forksCount ?: 0,
 )
 
 internal fun ContentItemDto.toRepoEntry(): RepoEntry? {

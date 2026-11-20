@@ -9,6 +9,9 @@ data class RepoDetail(
     val isPrivate: Boolean = false,
     val defaultBranch: String? = null,
     val htmlUrl: String? = null,
+    val ownerName: String? = null,
+    val ownerAvatarUrl: String? = null,
+    val forks: Int = 0,
 )
 
 enum class RepoEntryKind { Directory, File, Unsupported }

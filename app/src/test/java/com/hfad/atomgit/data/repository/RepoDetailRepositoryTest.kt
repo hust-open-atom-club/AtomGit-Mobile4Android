@@ -55,6 +55,23 @@ class RepoDetailRepositoryTest {
         assertEquals("feature/中文 分支", url.queryParameter("ref"))
     }
 
+    @Test fun detailMapsOwnerAvatarNameAndForkCount() = runTest {
+        respond("""{"name":"repo","forks_count":12,"owner":{"id":"opaque-user-id","login":"owner","name":"作者昵称","avatar_url":"https://example.com/avatar.png"}}""")
+        val detail = (repository.getDetail("owner", "repo") as ApiResult.Success).value
+        assertEquals("作者昵称", detail.ownerName)
+        assertEquals("https://example.com/avatar.png", detail.ownerAvatarUrl)
+        assertEquals(12, detail.forks)
+    }
+
+    @Test fun organizationHeaderUsesNamespaceDetails() = runTest {
+        respond("""{"name":"repo","namespace":{"path":"team","name":"团队名称","avatar_url":"https://example.com/team.png"}}""")
+        val detail = (repository.getDetail("team", "repo") as ApiResult.Success).value
+        assertEquals("team", detail.owner)
+        assertEquals("团队名称", detail.ownerName)
+        assertEquals("https://example.com/team.png", detail.ownerAvatarUrl)
+        assertEquals(0, detail.forks)
+    }
+
     @Test fun directoryEncodesEachPathSegmentOnce() = runTest {
         respond("[]")
         repository.getDirectory("owner", "repo", "中文/hello world/#a%.kt", "main")

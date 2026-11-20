@@ -3,16 +3,19 @@ package com.hfad.atomgit.ui.repo
 import com.hfad.atomgit.MainDispatcherRule
 import com.hfad.atomgit.data.model.CommitSummary
 import com.hfad.atomgit.data.model.PagedItems
+import com.hfad.atomgit.data.model.ProfileCounts
 import com.hfad.atomgit.data.model.RepoDetail
 import com.hfad.atomgit.data.model.RepoEntry
 import com.hfad.atomgit.data.model.RepoEntryKind
 import com.hfad.atomgit.data.model.RepoFileContent
 import com.hfad.atomgit.data.model.RepoRef
 import com.hfad.atomgit.data.model.RepoRefKind
+import com.hfad.atomgit.data.model.UserProfile
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.repository.RepoContentRepository
 import com.hfad.atomgit.data.repository.RepoDetailRepository
+import com.hfad.atomgit.data.repository.UserProfileRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Rule
@@ -25,8 +28,9 @@ class RepoDetailViewModelTest {
     @get:Rule val dispatcher = MainDispatcherRule()
     private val repository = FakeRepository()
     private val contents = FakeContents()
+    private val profiles = FakeProfiles()
 
-    private fun start() = RepoDetailViewModel(repository, contents).also { it.start("owner", "repo") }
+    private fun start() = RepoDetailViewModel(repository, contents, profiles).also { it.start("owner", "repo") }
     private fun file(path: String) = RepoEntry(path.substringAfterLast('/'), path, RepoEntryKind.File)
     private fun commit(sha: String) = CommitSummary(sha, "message")
     private fun <T> page(vararg items: T) = ApiResult.Success(PagedItems(items.toList()))
@@ -50,6 +54,42 @@ class RepoDetailViewModelTest {
         assertEquals(1, repository.tagCalls)
         assertTrue(vm.state.value.tags.loaded)
         assertTrue(vm.state.value.tags.endReached)
+    }
+
+    @Test fun ownerProfileFillsMissingHeaderWithoutReloadingDirectory() = runTest {
+        profiles.loader = { ApiResult.Success(UserProfile(it, name = "作者昵称", avatarUrl = "https://example.com/avatar.png")) }
+        val vm = start()
+        assertEquals("作者昵称", vm.state.value.detail?.ownerName)
+        assertEquals("https://example.com/avatar.png", vm.state.value.detail?.ownerAvatarUrl)
+        assertEquals(1, repository.directories.size)
+        assertNull(vm.state.value.error)
+    }
+
+    @Test fun ownerProfileFailureDoesNotFailRepositoryHeader() = runTest {
+        profiles.loader = { ApiResult.Failure(ApiError.Network) }
+        val vm = start()
+        assertNotNull(vm.state.value.detail)
+        assertNull(vm.state.value.error)
+        assertTrue(vm.state.value.files.loaded)
+    }
+
+    @Test fun completeOwnerDetailsDoNotRequestProfileAgain() = runTest {
+        repository.detailFactory = { owner, repo -> RepoDetail(owner, repo, repo, ownerName = "作者", ownerAvatarUrl = "https://example.com/a.png") }
+        start()
+        assertTrue(profiles.calls.isEmpty())
+    }
+
+    @Test fun oldOwnerProfileCannotUpdateAnotherRepository() = runTest {
+        var pending: Continuation<ApiResult<UserProfile>>? = null
+        profiles.loader = { login ->
+            if (login == "owner") suspendCoroutine<ApiResult<UserProfile>> { pending = it }
+            else ApiResult.Success(UserProfile(login, name = "新作者"))
+        }
+        val vm = start()
+        vm.start("next-owner", "next-repo")
+        pending!!.resume(ApiResult.Success(UserProfile("owner", name = "旧作者")))
+        assertEquals("新作者", vm.state.value.detail?.ownerName)
+        assertEquals("next-owner", vm.state.value.detail?.owner)
     }
 
     @Test fun paginationDeduplicatesAndStopsOnlyOnEmptyPageWithoutHeaders() = runTest {
@@ -178,6 +218,7 @@ class RepoDetailViewModelTest {
 
     private class FakeRepository : RepoDetailRepository {
         var detailCalls = 0
+        var detailFactory: (String, String) -> RepoDetail = { owner, repo -> RepoDetail(owner, repo, repo, defaultBranch = "develop") }
         val directories = mutableListOf<Pair<String, String>>()
         var directory: suspend (String, String) -> ApiResult<List<RepoEntry>> = { _, _ -> ApiResult.Success(emptyList()) }
         val commits = ArrayDeque<ApiResult<PagedItems<CommitSummary>>>()
@@ -186,7 +227,7 @@ class RepoDetailViewModelTest {
         var tagCalls = 0
         override suspend fun getDetail(owner: String, repo: String): ApiResult<RepoDetail> {
             detailCalls++
-            return ApiResult.Success(RepoDetail(owner, repo, repo, defaultBranch = "develop"))
+            return ApiResult.Success(detailFactory(owner, repo))
         }
         override suspend fun getDirectory(owner: String, repo: String, path: String, ref: String): ApiResult<List<RepoEntry>> {
             directories += path to ref
@@ -204,6 +245,16 @@ class RepoDetailViewModelTest {
             tagCalls++
             return ApiResult.Success(PagedItems(emptyList()))
         }
+    }
+
+    private class FakeProfiles : UserProfileRepository {
+        val calls = mutableListOf<String>()
+        var loader: suspend (String) -> ApiResult<UserProfile> = { ApiResult.Failure(ApiError.NotFound) }
+        override suspend fun get(login: String): ApiResult<UserProfile> {
+            calls += login
+            return loader(login)
+        }
+        override suspend fun counts(login: String) = ProfileCounts()
     }
 
     private class FakeContents : RepoContentRepository {

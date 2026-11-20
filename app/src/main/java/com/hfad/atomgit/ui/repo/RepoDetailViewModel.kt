@@ -13,6 +13,7 @@ import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.repository.RepoContentRepository
 import com.hfad.atomgit.data.repository.RepoDetailRepository
+import com.hfad.atomgit.data.repository.UserProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,6 +71,7 @@ data class RepoDetailUiState(
 class RepoDetailViewModel @Inject constructor(
     private val repository: RepoDetailRepository,
     private val contentRepository: RepoContentRepository,
+    private val userProfileRepository: UserProfileRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(RepoDetailUiState())
     val state = _state.asStateFlow()
@@ -81,6 +83,7 @@ class RepoDetailViewModel @Inject constructor(
     private var readmeRequest = 0L
     private val pageRequests = mutableMapOf<RepoDetailTab, Long>()
     private var headerJob: Job? = null
+    private var ownerJob: Job? = null
     private var directoryJob: Job? = null
     private var readmeJob: Job? = null
     private val pageJobs = mutableMapOf<RepoDetailTab, Job>()
@@ -91,6 +94,7 @@ class RepoDetailViewModel @Inject constructor(
         repoEpoch++
         refEpoch++
         headerJob?.cancel()
+        ownerJob?.cancel()
         directoryJob?.cancel()
         readmeJob?.cancel()
         pageJobs.values.forEach { it.cancel() }
@@ -101,6 +105,7 @@ class RepoDetailViewModel @Inject constructor(
 
     fun retryHeader() {
         headerJob?.cancel()
+        ownerJob?.cancel()
         val snapshot = _state.value
         val epoch = repoEpoch
         val request = ++headerRequest
@@ -121,10 +126,26 @@ class RepoDetailViewModel @Inject constructor(
                         )
                     }
                     if (initial) ensureTab()
+                    loadOwner(result.value, epoch, request)
                 }
                 is ApiResult.Failure -> if (epoch == repoEpoch && request == headerRequest) {
                     _state.update { it.copy(isLoading = false, error = result.error) }
                 }
+            }
+        }
+    }
+
+    private fun loadOwner(detail: RepoDetail, epoch: Long, request: Long) {
+        if (!detail.ownerName.isNullOrBlank() && !detail.ownerAvatarUrl.isNullOrBlank()) return
+        ownerJob = viewModelScope.launch {
+            val result = userProfileRepository.get(detail.owner)
+            if (epoch != repoEpoch || request != headerRequest || result !is ApiResult.Success) return@launch
+            val profile = result.value
+            _state.update { state ->
+                state.copy(detail = state.detail?.copy(
+                    ownerName = detail.ownerName ?: profile.name?.takeIf { it.isNotBlank() } ?: profile.login,
+                    ownerAvatarUrl = detail.ownerAvatarUrl ?: profile.avatarUrl?.takeIf { it.isNotBlank() },
+                ))
             }
         }
     }
