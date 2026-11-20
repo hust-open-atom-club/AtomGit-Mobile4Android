@@ -1,24 +1,32 @@
 package com.hfad.atomgit.ui.profile
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hfad.atomgit.data.model.RepoSort
 import com.hfad.atomgit.data.model.RepoVisibility
@@ -60,72 +68,98 @@ internal fun SortSheet(
     onSelect: (RepoSort) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val dark = isSystemInDarkTheme()
+    val cardColor = if (dark) {
+        MaterialTheme.colorScheme.surfaceVariant
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val gapColor = if (dark) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = MaterialTheme.colorScheme.surface,
+        sheetState = sheetState,
+        containerColor = gapColor,
         tonalElevation = 0.dp,
     ) {
-        Text(
-            text = "排序方式",
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-        )
-        SortSection(
-            title = "推送时间",
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 8.dp, end = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Outlined.Close,
+                    contentDescription = "关闭",
+                )
+            }
+            Text(
+                text = "排序方式",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        SortCard(
             options = listOf(RepoSort.PushedDesc, RepoSort.PushedAsc),
             selected = selected,
             onSelect = onSelect,
+            color = cardColor,
         )
-        SortSection(
-            title = "更新时间",
-            options = listOf(RepoSort.UpdatedDesc, RepoSort.UpdatedAsc),
-            selected = selected,
-            onSelect = onSelect,
-        )
-        SortSection(
-            title = "创建时间",
+        SortCard(
             options = listOf(RepoSort.CreatedDesc, RepoSort.CreatedAsc),
             selected = selected,
             onSelect = onSelect,
+            color = cardColor,
         )
-        SortSection(
-            title = "名称",
+        SortCard(
             options = listOf(RepoSort.NameAsc, RepoSort.NameDesc),
             selected = selected,
             onSelect = onSelect,
+            color = cardColor,
         )
         Box(modifier = Modifier.padding(bottom = 24.dp))
     }
 }
 
 @Composable
-private fun SortSection(
-    title: String,
+private fun SortCard(
     options: List<RepoSort>,
     selected: RepoSort,
     onSelect: (RepoSort) -> Unit,
+    color: Color,
 ) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
-    )
-    options.forEach { option ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onSelect(option) }
-                .padding(horizontal = 16.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = Modifier.padding(top = 12.dp)) {
+        Surface(
+            color = color,
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                text = option.label(),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            RadioButton(selected = option == selected, onClick = null)
+            Column {
+                options.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelect(option) }
+                            .padding(horizontal = 20.dp, vertical = 18.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = option.label(),
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        RadioButton(selected = option == selected, onClick = null)
+                    }
+                }
+            }
         }
     }
 }
