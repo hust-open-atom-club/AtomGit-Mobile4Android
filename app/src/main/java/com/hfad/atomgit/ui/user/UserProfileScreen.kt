@@ -40,6 +40,8 @@ import com.hfad.atomgit.data.model.FollowKind
 import com.hfad.atomgit.data.model.ProfileCounts
 import com.hfad.atomgit.data.model.UserProfile
 import com.hfad.atomgit.data.remote.error.ApiError
+import com.hfad.atomgit.ui.components.CenteredLoading
+import com.hfad.atomgit.ui.components.CenteredMessage
 import com.hfad.atomgit.ui.profile.MenuGlyph
 import com.hfad.atomgit.ui.profile.OrgGlyph
 import com.hfad.atomgit.ui.profile.ProfileHeader
@@ -117,11 +119,11 @@ fun UserProfileScreen(
                     }
                 }
             }
-            error != null -> CenteredHint(
-                text = error.orEmptyMessage(),
+            error != null -> CenteredMessage(
+                message = error.orEmptyMessage(),
                 onRetry = viewModel::retry,
             )
-            else -> CenteredProgress()
+            else -> CenteredLoading()
         }
     }
 }
@@ -227,47 +229,6 @@ private fun Panel(
         tonalElevation = 0.dp,
         content = content,
     )
-}
-
-@Composable
-private fun CenteredProgress() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier
-                .size(40.dp)
-                .testTag("user-profile-loading"),
-            strokeWidth = 4.dp,
-        )
-    }
-}
-
-@Composable
-private fun CenteredHint(
-    text: String,
-    onRetry: (() -> Unit)? = null,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (onRetry != null) {
-                TextButton(onClick = onRetry) {
-                    Text(text = "重试")
-                }
-            }
-        }
-    }
 }
 
 private fun ApiError.orEmptyMessage(): String = when (this) {

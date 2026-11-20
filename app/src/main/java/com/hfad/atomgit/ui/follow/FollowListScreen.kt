@@ -32,6 +32,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.FollowKind
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.ui.components.AtomPullRefreshIndicator
+import com.hfad.atomgit.ui.components.CenteredMessage
+import com.hfad.atomgit.ui.components.LoadMoreFooter
 
 @Composable
 fun FollowListScreen(
@@ -97,11 +99,11 @@ fun FollowListScreen(
             val error = state.error
             when {
                 state.isLoading && state.items.isEmpty() -> Box(modifier = Modifier.fillMaxSize())
-                error != null && state.items.isEmpty() -> EmptyOrError(
+                error != null && state.items.isEmpty() -> CenteredMessage(
                     message = error.orEmptyMessage(),
                     onRetry = viewModel::retry,
                 )
-                state.items.isEmpty() -> EmptyOrError(message = state.kind.emptyMessage())
+                state.items.isEmpty() -> CenteredMessage(message = state.kind.emptyMessage())
                 else -> FollowList(
                     state = state,
                     listState = listState,
@@ -136,25 +138,12 @@ private fun FollowList(
         }
         if (!state.endReached && !state.isLoading) {
             item(key = "follow-footer") {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    LaunchedEffect(state.items.size) {
-                        if (listState.firstVisibleItemIndex > 0 || listState.canScrollForward) {
-                            onLoadMore()
-                        }
-                    }
-                    if (state.isLoadingMore) {
-                        Text(
-                            text = "加载中…",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+                LoadMoreFooter(
+                    itemCount = state.items.size,
+                    listState = listState,
+                    isLoadingMore = state.isLoadingMore,
+                    onLoadMore = onLoadMore,
+                )
             }
         }
         if (state.error != null) {
@@ -168,32 +157,6 @@ private fun FollowList(
                     TextButton(onClick = onRetry) {
                         Text(text = "加载失败，点击重试")
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyOrError(
-    message: String,
-    onRetry: (() -> Unit)? = null,
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (onRetry != null) {
-                TextButton(onClick = onRetry) {
-                    Text(text = "重试")
                 }
             }
         }
