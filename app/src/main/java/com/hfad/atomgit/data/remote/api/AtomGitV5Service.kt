@@ -269,7 +269,11 @@ interface AtomGitV5Service {
     // region 项目与组织
 
     @GET("user/repos")
-    suspend fun listUserRepos(
+    suspend fun listMyRepos(
+        @Query("q") q: String? = null,
+        @Query("visibility") visibility: String? = null,
+        @Query("sort") sort: String? = null,
+        @Query("direction") direction: String? = null,
         @Query("page") page: Int,
         @Query("per_page") perPage: Int,
     ): Response<List<RepoDto>>

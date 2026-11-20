@@ -13,10 +13,19 @@ data class RepoDto(
      */
     @SerialName("full_name") val fullName: String? = null,
     val path: String? = null,
+    val description: String? = null,
     @SerialName("private") val isPrivate: Boolean? = null,
     @SerialName("default_branch") val defaultBranch: String? = null,
     @SerialName("html_url") val htmlUrl: String? = null,
     @SerialName("web_url") val webUrl: String? = null,
+    @SerialName("stargazers_count") val stargazersCount: Int? = null,
+    @SerialName("forks_count") val forksCount: Int? = null,
+    val language: String? = null,
+    /** 形如 `["Java", "#b07219"]`：语言名 + 颜色。 */
+    @SerialName("main_repository_language") val mainRepositoryLanguage: List<String> = emptyList(),
+    @SerialName("pushed_at") val pushedAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
+    val fork: Boolean? = null,
     val namespace: NamespaceDto? = null,
 )
 
