@@ -35,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
@@ -44,8 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.ui.components.CodeBlock
-import com.hfad.atomgit.ui.theme.Ink
-import com.hfad.atomgit.ui.theme.Paper
+import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
 
 @Composable
 fun CodeViewerScreen(
@@ -119,12 +119,16 @@ fun CodeViewerScreen(
                 DropdownMenu(
                     expanded = menuExpanded,
                     onDismissRequest = { menuExpanded = false },
-                    containerColor = Paper,
+                    containerColor = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                        RepoFilterMenuDark
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
                 ) {
                     val menuItemColors = MenuDefaults.itemColors(
-                        textColor = Ink,
-                        leadingIconColor = Ink,
-                        trailingIconColor = Ink,
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        leadingIconColor = MaterialTheme.colorScheme.onSurface,
+                        trailingIconColor = MaterialTheme.colorScheme.onSurface,
                     )
                     DropdownMenuItem(
                         text = { Text("复制路径") },
