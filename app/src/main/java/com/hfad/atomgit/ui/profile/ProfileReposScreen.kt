@@ -13,27 +13,36 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -55,6 +64,13 @@ fun ProfileReposScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     var showSortSheet by remember { mutableStateOf(false) }
+    var searching by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(searching) {
+        if (searching) focusRequester.requestFocus()
+    }
 
     if (showSortSheet) {
         SortSheet(
@@ -72,35 +88,72 @@ fun ProfileReposScreen(
             .fillMaxSize()
             .testTag("screen-profile-repos"),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             IconButton(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.CenterStart),
+                onClick = {
+                    if (searching) {
+                        viewModel.onQueryChange("")
+                        searching = false
+                        keyboard?.hide()
+                    } else {
+                        onBack()
+                    }
+                },
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = if (searching) "退出搜索" else "返回",
                 )
             }
-            Text(
-                text = "仓库",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(vertical = 12.dp),
-            )
+            if (searching) {
+                TextField(
+                    value = state.query,
+                    onValueChange = viewModel::onQueryChange,
+                    modifier = Modifier
+                        .weight(1f)
+                        .focusRequester(focusRequester)
+                        .testTag("repos-search"),
+                    placeholder = { Text("搜索仓库") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                )
+                IconButton(onClick = { viewModel.onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = "清空",
+                    )
+                }
+            } else {
+                Text(
+                    text = "仓库",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 4.dp),
+                )
+                IconButton(
+                    onClick = { searching = true },
+                    modifier = Modifier.testTag("repos-search-open"),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = "搜索",
+                    )
+                }
+            }
         }
-        OutlinedTextField(
-            value = state.query,
-            onValueChange = viewModel::onQueryChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .testTag("repos-search"),
-            placeholder = { Text("搜索仓库") },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -171,7 +224,9 @@ fun ProfileReposScreen(
                     message = error.label(),
                     onRetry = viewModel::retry,
                 )
-                state.items.isEmpty() -> CenteredMessage(message = "没有仓库")
+                state.items.isEmpty() -> CenteredMessage(
+                    message = if (state.query.isBlank()) "没有仓库" else "没有找到匹配的仓库",
+                )
                 else -> RepoList(
                     state = state,
                     listState = listState,
