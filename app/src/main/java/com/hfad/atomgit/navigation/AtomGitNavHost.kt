@@ -34,6 +34,7 @@ import com.hfad.atomgit.ui.issue.IssueDetailScreen
 import com.hfad.atomgit.ui.notification.NotificationScreen
 import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
+import com.hfad.atomgit.ui.repo.RepoDetailScreen
 import com.hfad.atomgit.ui.settings.SettingsScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
 import com.hfad.atomgit.ui.user.UserProfileScreen
@@ -52,10 +53,13 @@ fun AtomGitNavHost(
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            AtomGitBottomBar(
-                selected = navState.selectedTab,
-                onSelect = navState::select,
-            )
+            val current = navState.currentStack.lastOrNull()
+            if (current !is RepoDetailRoute && current !is CodeViewerRoute) {
+                AtomGitBottomBar(
+                    selected = navState.selectedTab,
+                    onSelect = navState::select,
+                )
+            }
         },
     ) { innerPadding ->
         NavDisplay(
@@ -100,7 +104,20 @@ fun AtomGitNavHost(
                         )
                     }
                     entry<ProfileReposRoute> {
-                        ProfileReposScreen(onBack = { navState.pop() })
+                        ProfileReposScreen(
+                            onBack = { navState.pop() },
+                            onOpenRepo = { owner, repo -> navState.push(RepoDetailRoute(owner, repo)) },
+                        )
+                    }
+                    entry<RepoDetailRoute> { route ->
+                        RepoDetailScreen(
+                            owner = route.owner,
+                            repo = route.repo,
+                            onBack = { navState.pop() },
+                            onOpenFile = { path, ref ->
+                                navState.push(CodeViewerRoute(route.owner, route.repo, path, ref))
+                            },
+                        )
                     }
                     entry<FollowListRoute> { route ->
                         FollowListScreen(

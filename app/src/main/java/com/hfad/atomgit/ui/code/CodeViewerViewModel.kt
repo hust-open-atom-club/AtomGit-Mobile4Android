@@ -3,6 +3,7 @@ package com.hfad.atomgit.ui.code
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hfad.atomgit.data.model.CodeViewerPreferences
+import com.hfad.atomgit.data.model.isKnownBinaryPath
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.repository.CodeViewerPreferencesRepository
@@ -29,6 +30,9 @@ data class CodeViewerUiState(
     val content: String = "",
     val isLoading: Boolean = false,
     val error: ApiError? = null,
+    val previewMessage: String? = null,
+    val previewSupported: Boolean = true,
+    val previewContent: String? = null,
 ) {
     val displayPath: String
         get() = when {
@@ -70,7 +74,7 @@ class CodeViewerViewModel @Inject constructor(
             current.path == path &&
             current.ref == ref &&
             current.sample == sample &&
-            (current.content.isNotEmpty() || current.error != null || current.isLoading)
+            (current.content.isNotEmpty() || current.error != null || current.isLoading || !current.previewSupported || current.previewContent != null)
         ) {
             return
         }
@@ -106,6 +110,17 @@ class CodeViewerViewModel @Inject constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            if (isKnownBinaryPath(snapshot.path)) {
+                _state.update {
+                    it.copy(
+                        isLoading = false,
+                        content = "",
+                        previewSupported = false,
+                        previewMessage = "暂不支持预览此类型的文件，请在仓库网页查看",
+                    )
+                }
+                return@launch
+            }
             when (
                 val result = contentRepository.getFile(
                     owner = snapshot.owner,
@@ -115,12 +130,17 @@ class CodeViewerViewModel @Inject constructor(
                 )
             ) {
                 is ApiResult.Success -> {
+                    val preview = prepareCodePreview(result.value.content)
+                    // 保留原文用于复制和分享，截断仅用于预览
                     _state.update {
                         it.copy(
-                            content = result.value.content,
+                            content = if (preview.supported) result.value.content else "",
                             path = result.value.path,
                             isLoading = false,
                             error = null,
+                            previewMessage = preview.message,
+                            previewSupported = preview.supported,
+                            previewContent = preview.text,
                         )
                     }
                 }

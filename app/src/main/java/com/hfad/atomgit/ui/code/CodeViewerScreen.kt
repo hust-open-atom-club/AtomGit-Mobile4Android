@@ -137,6 +137,7 @@ fun CodeViewerScreen(
                     )
                     DropdownMenuItem(
                         text = { Text("复制内容") },
+                        enabled = state.previewSupported && !state.isLoading && state.error == null,
                         onClick = {
                             menuExpanded = false
                             copyText(context, state.content, "内容已复制")
@@ -146,6 +147,7 @@ fun CodeViewerScreen(
                     )
                     DropdownMenuItem(
                         text = { Text("分享") },
+                        enabled = state.previewSupported && !state.isLoading && state.error == null,
                         onClick = {
                             menuExpanded = false
                             shareText(context, state.displayPath, state.content)
@@ -166,6 +168,7 @@ fun CodeViewerScreen(
                     CircularProgressIndicator()
                 }
             }
+
             state.error != null -> {
                 Column(
                     modifier = Modifier
@@ -185,9 +188,29 @@ fun CodeViewerScreen(
                     }
                 }
             }
+
+            !state.previewSupported -> {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(24.dp), contentAlignment = Alignment.Center
+                ) {
+                    Text(state.previewMessage.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+
             else -> {
+                state.previewMessage?.let {
+                    Text(
+                        it,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
                 CodeBlock(
-                    code = state.content,
+                    code = state.previewContent ?: state.content,
                     preferences = preferences,
                     path = state.path.ifBlank { state.displayPath },
                     modifier = Modifier

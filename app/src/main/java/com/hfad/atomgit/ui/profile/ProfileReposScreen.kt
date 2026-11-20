@@ -60,6 +60,7 @@ import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
 @Composable
 fun ProfileReposScreen(
     onBack: () -> Unit,
+    onOpenRepo: (owner: String, repo: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileReposViewModel = hiltViewModel(),
 ) {
@@ -239,6 +240,7 @@ fun ProfileReposScreen(
                     listState = listState,
                     onLoadMore = viewModel::loadMore,
                     onRetry = viewModel::retry,
+                    onOpenRepo = onOpenRepo,
                 )
             }
         }
@@ -251,6 +253,7 @@ private fun RepoList(
     listState: LazyListState,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
+    onOpenRepo: (String, String) -> Unit,
 ) {
     LazyColumn(
         state = listState,
@@ -266,7 +269,7 @@ private fun RepoList(
             if (index > 0) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
-            RepoRow(repo = repo)
+            RepoRow(repo = repo, onClick = { onOpenRepo(repo.ownerPath, repo.path) })
         }
         if (!state.endReached && !state.isLoading) {
             item(key = "repos-footer") {
