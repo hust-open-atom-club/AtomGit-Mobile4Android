@@ -60,6 +60,7 @@ import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
 @Composable
 fun ProfileReposScreen(
     onBack: () -> Unit,
+    onOpenRepo: (owner: String, repo: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ProfileReposViewModel = hiltViewModel(),
 ) {
@@ -125,7 +126,7 @@ fun ProfileReposScreen(
                         .weight(1f)
                         .focusRequester(focusRequester)
                         .testTag("repos-search"),
-                    placeholder = { Text("搜索仓库") },
+                    placeholder = { Text("搜索项目") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
@@ -144,7 +145,7 @@ fun ProfileReposScreen(
                 }
             } else {
                 Text(
-                    text = "仓库",
+                    text = "项目",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .weight(1f)
@@ -232,13 +233,14 @@ fun ProfileReposScreen(
                     onRetry = viewModel::retry,
                 )
                 state.items.isEmpty() -> CenteredMessage(
-                    message = if (state.query.isBlank()) "没有仓库" else "没有找到匹配的仓库",
+                    message = if (state.query.isBlank()) "没有项目" else "没有找到匹配的项目",
                 )
                 else -> RepoList(
                     state = state,
                     listState = listState,
                     onLoadMore = viewModel::loadMore,
                     onRetry = viewModel::retry,
+                    onOpenRepo = onOpenRepo,
                 )
             }
         }
@@ -251,6 +253,7 @@ private fun RepoList(
     listState: LazyListState,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
+    onOpenRepo: (String, String) -> Unit,
 ) {
     LazyColumn(
         state = listState,
@@ -266,7 +269,7 @@ private fun RepoList(
             if (index > 0) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
-            RepoRow(repo = repo)
+            RepoRow(repo = repo, onClick = { onOpenRepo(repo.ownerPath, repo.path) })
         }
         if (!state.endReached && !state.isLoading) {
             item(key = "repos-footer") {

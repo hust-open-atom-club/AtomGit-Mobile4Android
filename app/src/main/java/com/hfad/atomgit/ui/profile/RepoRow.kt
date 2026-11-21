@@ -1,6 +1,7 @@
 package com.hfad.atomgit.ui.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,10 +30,11 @@ import androidx.core.graphics.toColorInt
 private val StarYellow = Color(0xFFF5C518)
 
 @Composable
-internal fun RepoRow(repo: RepoSummary) {
+internal fun RepoRow(repo: RepoSummary, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp)
             .testTag("repo-row"),
         verticalArrangement = Arrangement.spacedBy(6.dp),

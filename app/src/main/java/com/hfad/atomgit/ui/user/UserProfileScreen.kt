@@ -134,7 +134,7 @@ private fun ProfileMenu(counts: ProfileCounts) {
     Column(modifier = Modifier.fillMaxWidth()) {
         ProfileMenuRow(
             iconBackground = Color(0xFF2F363D),
-            title = "仓库",
+            title = "项目",
             count = counts.repos?.toString().orEmpty(),
             icon = { MenuGlyph(Color.White) },
         )

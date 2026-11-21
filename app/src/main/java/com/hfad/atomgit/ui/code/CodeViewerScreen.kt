@@ -35,17 +35,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hfad.atomgit.data.model.CodeViewerPreferences
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.ui.components.CodeBlock
-import com.hfad.atomgit.ui.theme.Ink
-import com.hfad.atomgit.ui.theme.Paper
+import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
 
 @Composable
 fun CodeViewerScreen(
@@ -119,12 +121,16 @@ fun CodeViewerScreen(
                 DropdownMenu(
                     expanded = menuExpanded,
                     onDismissRequest = { menuExpanded = false },
-                    containerColor = Paper,
+                    containerColor = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                        RepoFilterMenuDark
+                    } else {
+                        MaterialTheme.colorScheme.surface
+                    },
                 ) {
                     val menuItemColors = MenuDefaults.itemColors(
-                        textColor = Ink,
-                        leadingIconColor = Ink,
-                        trailingIconColor = Ink,
+                        textColor = MaterialTheme.colorScheme.onSurface,
+                        leadingIconColor = MaterialTheme.colorScheme.onSurface,
+                        trailingIconColor = MaterialTheme.colorScheme.onSurface,
                     )
                     DropdownMenuItem(
                         text = { Text("复制路径") },
@@ -137,6 +143,7 @@ fun CodeViewerScreen(
                     )
                     DropdownMenuItem(
                         text = { Text("复制内容") },
+                        enabled = state.previewSupported && !state.isLoading && state.error == null,
                         onClick = {
                             menuExpanded = false
                             copyText(context, state.content, "内容已复制")
@@ -146,6 +153,7 @@ fun CodeViewerScreen(
                     )
                     DropdownMenuItem(
                         text = { Text("分享") },
+                        enabled = state.previewSupported && !state.isLoading && state.error == null,
                         onClick = {
                             menuExpanded = false
                             shareText(context, state.displayPath, state.content)
@@ -157,6 +165,22 @@ fun CodeViewerScreen(
             }
         }
 
+        CodeViewerBody(
+            state = state,
+            preferences = preferences,
+            onRetry = viewModel::retry,
+        )
+    }
+}
+
+@Composable
+internal fun CodeViewerBody(
+    state: CodeViewerUiState,
+    preferences: CodeViewerPreferences,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
         when {
             state.isLoading -> {
                 Box(
@@ -166,6 +190,7 @@ fun CodeViewerScreen(
                     CircularProgressIndicator()
                 }
             }
+
             state.error != null -> {
                 Column(
                     modifier = Modifier
@@ -178,22 +203,49 @@ fun CodeViewerScreen(
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     TextButton(
-                        onClick = viewModel::retry,
+                        onClick = onRetry,
                         modifier = Modifier.testTag("code-viewer-retry"),
                     ) {
                         Text("重试")
                     }
                 }
             }
-            else -> {
-                CodeBlock(
-                    code = state.content,
-                    preferences = preferences,
-                    path = state.path.ifBlank { state.displayPath },
-                    modifier = Modifier
+
+            !state.previewSupported -> {
+                Box(
+                    Modifier
                         .fillMaxSize()
-                        .testTag("code-viewer-block"),
-                )
+                        .padding(24.dp), contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = state.previewMessage.orEmpty(),
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+
+            else -> {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    state.previewMessage?.let {
+                        Text(
+                            it,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    CodeBlock(
+                        code = state.previewContent ?: state.content,
+                        preferences = preferences,
+                        path = state.path.ifBlank { state.displayPath },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("code-viewer-block"),
+                    )
+                }
             }
         }
     }
