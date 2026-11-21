@@ -3,6 +3,7 @@ package com.hfad.atomgit.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hfad.atomgit.data.model.AuthSession
+import com.hfad.atomgit.data.repository.RepoRepository
 import com.hfad.atomgit.data.repository.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val MinRefreshMillis = 800L
 
@@ -25,6 +27,7 @@ private const val MinRefreshMillis = 800L
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val repository: SessionRepository,
+    private val repoRepository: RepoRepository,
 ) : ViewModel() {
 
     val session: StateFlow<AuthSession?> = repository.session
@@ -35,14 +38,22 @@ class ProfileViewModel @Inject constructor(
     private val _refreshFailed = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val refreshFailed: SharedFlow<Unit> = _refreshFailed.asSharedFlow()
 
+    private val _repoCount = MutableStateFlow<Long?>(null)
+    val repoCount: StateFlow<Long?> = _repoCount.asStateFlow()
+
+    init {
+        loadRepoCount()
+    }
+
     fun refresh() {
         if (_refreshing.value) return
         viewModelScope.launch {
             _refreshing.value = true
             try {
+                loadRepoCount()
                 val ok = coroutineScope {
                     val refresh = async { repository.refreshProfile() }
-                    delay(MinRefreshMillis)
+                    delay(MinRefreshMillis.milliseconds)
                     refresh.await()
                 }
                 if (!ok) {
@@ -52,5 +63,9 @@ class ProfileViewModel @Inject constructor(
                 _refreshing.value = false
             }
         }
+    }
+
+    private fun loadRepoCount() {
+        viewModelScope.launch { _repoCount.value = repoRepository.countMine() }
     }
 }

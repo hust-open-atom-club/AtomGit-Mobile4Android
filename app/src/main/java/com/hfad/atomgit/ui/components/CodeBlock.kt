@@ -45,9 +45,11 @@ import com.hfad.atomgit.ui.code.syntaxColorsFor
 import com.hfad.atomgit.ui.theme.AccentBlue
 import com.hfad.atomgit.ui.theme.AccentBlueDark
 import com.hfad.atomgit.ui.theme.Ink
+import com.hfad.atomgit.ui.theme.InkMutedDark
 import com.hfad.atomgit.ui.theme.Paper
 import com.hfad.atomgit.ui.theme.PaperDark
 import com.hfad.atomgit.ui.theme.PaperDim
+import com.hfad.atomgit.ui.theme.PaperDimDark
 
 /**
  * 共用代码块：按逻辑行布局。
@@ -65,8 +67,8 @@ fun CodeBlock(
 ) {
     val dark = preferences.alwaysDarkTheme
     val background = if (dark) PaperDark else Paper
-    val lineNumberBackground = PaperDim
-    val lineNumberColor = Ink
+    val lineNumberBackground = if (dark) PaperDimDark else PaperDim
+    val lineNumberColor = if (dark) InkMutedDark else Ink
     val colors = remember(dark) { syntaxColorsFor(dark) }
     val lines = remember(code) {
         if (code.isEmpty()) listOf("") else code.split('\n')

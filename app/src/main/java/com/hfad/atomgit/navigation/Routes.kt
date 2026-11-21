@@ -26,6 +26,9 @@ data object ProfileRoute : Route
 data object ProfileReposRoute : Route
 
 @Serializable
+data class RepoDetailRoute(val owner: String, val repo: String) : Route
+
+@Serializable
 data class FollowListRoute(
     val login: String,
     val kind: FollowKind = FollowKind.Followers,

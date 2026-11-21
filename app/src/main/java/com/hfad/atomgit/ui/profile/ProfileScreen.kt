@@ -53,6 +53,7 @@ fun ProfileScreen(
 ) {
     val session by viewModel.session.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
+    val repoCount by viewModel.repoCount.collectAsStateWithLifecycle()
     val displayName = session?.name?.takeIf { it.isNotBlank() } ?: session?.login ?: "未登录"
     val pageBackground = MaterialTheme.colorScheme.surfaceVariant
     val snackbarHostState = remember { SnackbarHostState() }
@@ -129,8 +130,8 @@ fun ProfileScreen(
                             }
                             ProfileMenuRow(
                                 iconBackground = Color(0xFF2F363D),
-                                title = "仓库",
-                                count = "15",
+                                title = "项目",
+                                count = repoCount?.toString().orEmpty(),
                                 onClick = onOpenRepos,
                                 icon = { MenuGlyph(Color.White) },
                                 modifier = Modifier.padding(top = 8.dp),
