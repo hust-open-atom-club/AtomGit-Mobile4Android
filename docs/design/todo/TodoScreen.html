@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AtomGit · 待办页设计稿</title>
+  <style>
+    :root {
+      --ink: #111111;
+      --ink-muted: #6b6b6b;
+      --paper: #ffffff;
+      --paper-dim: #f4f4f4;
+      --hairline: #e0e0e0;
+      --accent: #1a73e8;
+      --issue: #1a7f37;
+      --issue-bg: #dcffe4;
+      --pr: #8250df;
+      --pr-bg: #f0e7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #d8d8d8;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--paper-dim);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,.18);
+      display: flex;
+      flex-direction: column;
+    }
+    .status {
+      height: 44px;
+      background: var(--paper);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .header { background: var(--paper); }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+    }
+    .title { font-size: 22px; font-weight: 700; margin: 0; }
+    .pill {
+      background: var(--paper-dim);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      text-align: center;
+      font-size: 14px;
+      position: relative;
+    }
+    .tab { padding: 12px 0 14px; color: var(--ink-muted); font-weight: 500; }
+    .tab.active { color: var(--ink); font-weight: 600; }
+    .tabs::after {
+      content: "";
+      position: absolute;
+      left: 25%;
+      bottom: 0;
+      width: 60px;
+      height: 3px;
+      margin-left: -30px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+    .chips {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 14px;
+      overflow: auto;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--paper-dim);
+      border: 1px solid var(--hairline);
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+    .chip.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .list {
+      flex: 1;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: auto;
+    }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+    }
+    .badge {
+      min-width: 40px;
+      height: 32px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 0 8px;
+    }
+    .badge.issue { background: var(--issue-bg); color: var(--issue); }
+    .badge.pr { background: var(--pr-bg); color: var(--pr); }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+    }
+    .num { color: var(--accent); font-weight: 500; }
+    .status-chip {
+      display: inline-block;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .open { background: var(--issue-bg); color: var(--issue); }
+    .merged { background: var(--pr-bg); color: var(--pr); }
+    .time { font-size: 11px; color: var(--ink-muted); }
+    .nav {
+      height: 80px;
+      background: var(--paper);
+      border-top: 1px solid #e8e8e8;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      place-items: center;
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    .nav .item { text-align: center; }
+    .nav .item.active { color: var(--ink); font-weight: 600; }
+    .dot {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1.5px solid currentColor; margin: 0 auto 8px;
+    }
+    .nav .item.active .dot { background: var(--paper-dim); }
+  </style>
+</head>
+<body>
+  <div class="phone" id="todo-design">
+    <div class="status"><span>9:41</span><span>■</span></div>
+    <div class="header">
+      <div class="title-row">
+        <h1 class="title">待办</h1>
+        <span class="pill">12 · 5</span>
+      </div>
+      <div class="tabs">
+        <div class="tab active">待处理</div>
+        <div class="tab">跟进</div>
+      </div>
+      <div class="chips">
+        <span class="chip on">指派给我</span>
+        <span class="chip">待批准</span>
+        <span class="chip">待评审</span>
+      </div>
+    </div>
+    <div class="list">
+      <article class="card">
+        <div class="badge issue">Issue</div>
+        <div>
+          <h3>Fix OAuth redirect loop</h3>
+          <div class="meta"><span class="num">#128</span><span>·</span><span>atomgit/android-client</span></div>
+          <div><span class="status-chip open">open</span><span class="time">11-18 09:20</span></div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="badge pr">PR</div>
+        <div>
+          <h3>Add pull-to-refresh on todo</h3>
+          <div class="meta"><span class="num">#86</span><span>·</span><span>atomgit/android-client</span></div>
+          <div><span class="status-chip merged">merged</span><span class="time">11-17 21:04</span></div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="badge issue">Issue</div>
+        <div>
+          <h3>Review permission matrix</h3>
+          <div class="meta"><span class="num">#201</span><span>·</span><span>atomgit/server</span></div>
+          <div><span class="status-chip open">open</span><span class="time">11-16 14:12</span></div>
+        </div>
+      </article>
+    </div>
+    <nav class="nav">
+      <div class="item"><div class="dot"></div>动态</div>
+      <div class="item active"><div class="dot"></div>待办</div>
+      <div class="item"><div class="dot"></div>通知</div>
+      <div class="item"><div class="dot"></div>我的</div>
+    </nav>
+  </div>
+</body>
+</html>

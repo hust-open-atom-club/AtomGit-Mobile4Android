@@ -43,9 +43,9 @@ private val LightColorScheme = lightColorScheme(
 
 private val DarkColorScheme = darkColorScheme(
     primary = AccentBlueDark,
-    onPrimary = PaperDark,
+    onPrimary = Paper,
     primaryContainer = AccentBlueContainerDark,
-    onPrimaryContainer = InkDark,
+    onPrimaryContainer = AccentBlueBright,
     secondary = InkMutedDark,
     onSecondary = PaperDark,
     secondaryContainer = PaperDimDark,

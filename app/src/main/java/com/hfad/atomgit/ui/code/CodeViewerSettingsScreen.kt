@@ -44,7 +44,6 @@ import com.hfad.atomgit.data.model.CodeFontSizeSteps
 import com.hfad.atomgit.ui.components.CODE_PREVIEW_SAMPLE
 import com.hfad.atomgit.ui.components.CodeBlock
 import com.hfad.atomgit.ui.profile.Pressable
-import com.hfad.atomgit.ui.theme.AccentBlue
 import com.hfad.atomgit.ui.theme.Ink
 import com.hfad.atomgit.ui.theme.InkMuted
 import com.hfad.atomgit.ui.theme.Paper
@@ -214,13 +213,14 @@ private fun CodePreferenceSwitch(
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge,
         )
+        val accent = MaterialTheme.colorScheme.primary
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Paper,
-                checkedTrackColor = AccentBlue,
-                checkedBorderColor = AccentBlue,
+                checkedTrackColor = accent,
+                checkedBorderColor = accent,
                 uncheckedThumbColor = Paper,
                 uncheckedTrackColor = Color(0xFF9E9E9E),
                 uncheckedBorderColor = InkMuted,
@@ -240,9 +240,10 @@ private fun CodeFontSizeSlider(
     onFontSizeSpChange: (Int) -> Unit,
 ) {
     val stepIndex = CodeFontSizeSteps.indexOf(fontSizeSp).coerceAtLeast(0)
+    val accent = MaterialTheme.colorScheme.primary
     val sliderColors = SliderDefaults.colors(
-        thumbColor = AccentBlue,
-        activeTrackColor = AccentBlue,
+        thumbColor = accent,
+        activeTrackColor = accent,
         inactiveTrackColor = Color(0xFFBDBDBD),
         activeTickColor = Color.Transparent,
         inactiveTickColor = Color.Transparent,
@@ -268,7 +269,7 @@ private fun CodeFontSizeSlider(
                 text = "${fontSizeSp}sp",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = AccentBlue,
+                color = accent,
             )
         }
         Row(
@@ -296,7 +297,7 @@ private fun CodeFontSizeSlider(
                             .size(22.dp)
                             .shadow(2.dp, CircleShape)
                             .border(2.dp, Paper, CircleShape)
-                            .background(AccentBlue, CircleShape),
+                            .background(accent, CircleShape),
                     )
                 },
                 track = { state ->

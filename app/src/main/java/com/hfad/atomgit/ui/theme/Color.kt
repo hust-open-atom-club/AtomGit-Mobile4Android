@@ -2,7 +2,7 @@ package com.hfad.atomgit.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// 黑白灰主调 + 蓝色强调（选中 / 开关等），不走默认紫粉。
+// 浅色：白底 + 浅蓝强调；深色：黑底 + 深蓝强调。
 val Ink = Color(0xFF111111)
 val InkMuted = Color(0xFF6B6B6B)
 val Paper = Color(0xFFFFFFFF)
@@ -16,12 +16,14 @@ val OnError = Color(0xFFFFFFFF)
 
 val InkDark = Color(0xFFE8E8E8)
 val InkMutedDark = Color(0xFFB0B0B0)
-val PaperDark = Color(0xFF121212)
-val PaperDimDark = Color(0xFF1C1C1C)
-val HairlineDark = Color(0xFF2C2C2C)
-val IndicatorDark = Color(0xFF2A2A2A)
-val AccentBlueDark = Color(0xFF8AB4F8)
-val AccentBlueContainerDark = Color(0xFF1A3A5C)
+val PaperDark = Color(0xFF000000)
+val PaperDimDark = Color(0xFF111111)
+val HairlineDark = Color(0xFF2A2A2A)
+val IndicatorDark = Color(0xFF1F1F1F)
+val AccentBlueDark = Color(0xFF0D47A1)
+val AccentBlueContainerDark = Color(0xFF0A2A4A)
+// 深色代码区高对比亮蓝，不参与主题 primary
+val AccentBlueBright = Color(0xFF8AB4F8)
 
 // 仓库排序抽屉
 val SheetDark = Color(0xFF050505)

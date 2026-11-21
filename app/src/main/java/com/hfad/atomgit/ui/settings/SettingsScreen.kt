@@ -35,7 +35,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +43,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.ThemeMode
 import com.hfad.atomgit.ui.profile.Pressable
-import com.hfad.atomgit.ui.theme.AccentBlue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,7 +183,7 @@ fun SettingsScreen(
                                     showThemeSheet = false
                                 },
                                 colors = RadioButtonDefaults.colors(
-                                    selectedColor = AccentBlue,
+                                    selectedColor = MaterialTheme.colorScheme.primary,
                                 ),
                             )
                         }
@@ -196,11 +194,12 @@ fun SettingsScreen(
     }
 
     if (showLogoutConfirm) {
+        val colors = MaterialTheme.colorScheme
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = false },
-            containerColor = Color.White,
-            titleContentColor = Color.Black,
-            textContentColor = Color.Black,
+            containerColor = colors.surface,
+            titleContentColor = colors.onSurface,
+            textContentColor = colors.onSurface,
             title = { Text("退出登录") },
             text = { Text("确定要退出当前账号吗？") },
             confirmButton = {
@@ -211,7 +210,7 @@ fun SettingsScreen(
                     },
                     modifier = Modifier.testTag("settings-logout-confirm"),
                 ) {
-                    Text("退出", color = MaterialTheme.colorScheme.error)
+                    Text("退出", color = colors.error)
                 }
             },
             dismissButton = {
@@ -219,7 +218,7 @@ fun SettingsScreen(
                     onClick = { showLogoutConfirm = false },
                     modifier = Modifier.testTag("settings-logout-cancel"),
                 ) {
-                    Text("取消", color = Color.Black)
+                    Text("取消", color = colors.onSurface)
                 }
             },
         )

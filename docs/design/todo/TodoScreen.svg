@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" fill="none">
+  <title>AtomGit · …žu</title>
+  <desc>…žu UI ¾¡?  ïÖe Figma æX: .fig</desc>
+
+  <!-- Device / page -->
+  <rect width="390" height="844" rx="0" fill="#F4F4F4"/>
+
+  <!-- Status bar -->
+  <rect x="0" y="0" width="390" height="44" fill="#FFFFFF"/>
+  <text x="24" y="28" font-family="Segoe UI, Roboto, sans-serif" font-size="13" font-weight="600" fill="#111111">9:41</text>
+  <circle cx="348" cy="24" r="5" fill="#111111"/>
+  <rect x="358" y="18" width="18" height="12" rx="2" fill="#111111"/>
+
+  <!-- Header panel -->
+  <rect x="0" y="44" width="390" height="168" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="16" y="78" font-family="Segoe UI, Roboto, sans-serif" font-size="22" font-weight="700" fill="#111111">…ž</text>
+
+  <!-- Count pill -->
+  <rect x="300" y="58" width="74" height="24" rx="12" fill="#F4F4F4"/>
+  <text x="337" y="74" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">12 · 5</text>
+
+  <!-- Tabs -->
+  <text x="78" y="118" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#111111">…</text>
+  <text x="273" y="118" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="14" font-weight="500" fill="#6B6B6B">ßÛ</text>
+  <rect x="48" y="128" width="60" height="3" rx="1.5" fill="#1A73E8"/>
+
+  <!-- Source chips -->
+  <rect x="16" y="148" width="88" height="32" rx="16" fill="#1A73E8"/>
+  <text x="60" y="168" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="600" fill="#FFFFFF">>Ù</text>
+
+  <rect x="112" y="148" width="72" height="32" rx="16" fill="#F4F4F4" stroke="#E0E0E0"/>
+  <text x="148" y="168" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500" fill="#6B6B6B">…yÆ</text>
+
+  <rect x="192" y="148" width="72" height="32" rx="16" fill="#F4F4F4" stroke="#E0E0E0"/>
+  <text x="228" y="168" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500" fill="#6B6B6B">…Ä¡</text>
+
+  <!-- Card 1 -->
+  <g transform="translate(12, 224)">
+    <rect width="366" height="104" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+    <rect x="14" y="14" width="40" height="32" rx="10" fill="#DCFFE4"/>
+    <text x="34" y="34" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#1A7F37">Issue</text>
+    <text x="66" y="30" font-family="Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#111111">Fix OAuth redirect loop</text>
+    <text x="66" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500" fill="#1A73E8">#128</text>
+    <text x="100" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" fill="#6B6B6B">·  atomgit/android-client</text>
+    <rect x="66" y="66" width="42" height="20" rx="6" fill="#DCFFE4"/>
+    <text x="87" y="80" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="500" fill="#1A7F37">open</text>
+    <text x="120" y="80" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">11-18 09:20</text>
+  </g>
+
+  <!-- Card 2 -->
+  <g transform="translate(12, 338)">
+    <rect width="366" height="104" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+    <rect x="14" y="14" width="40" height="32" rx="10" fill="#F0E7FF"/>
+    <text x="34" y="34" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#8250DF">PR</text>
+    <text x="66" y="30" font-family="Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#111111">Add pull-to-refresh on todo</text>
+    <text x="66" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500" fill="#1A73E8">#86</text>
+    <text x="96" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" fill="#6B6B6B">·  atomgit/android-client</text>
+    <rect x="66" y="66" width="52" height="20" rx="6" fill="#F0E7FF"/>
+    <text x="92" y="80" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="500" fill="#8250DF">merged</text>
+    <text x="130" y="80" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">11-17 21:04</text>
+  </g>
+
+  <!-- Card 3 -->
+  <g transform="translate(12, 452)">
+    <rect width="366" height="104" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+    <rect x="14" y="14" width="40" height="32" rx="10" fill="#DCFFE4"/>
+    <text x="34" y="34" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#1A7F37">Issue</text>
+    <text x="66" y="30" font-family="Segoe UI, Roboto, sans-serif" font-size="14" font-weight="600" fill="#111111">Review permission matrix</text>
+    <text x="66" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" font-weight="500" fill="#1A73E8">#201</text>
+    <text x="100" y="52" font-family="Segoe UI, Roboto, sans-serif" font-size="12" fill="#6B6B6B">·  atomgit/server</text>
+    <rect x="66" y="66" width="42" height="20" rx="6" fill="#DCFFE4"/>
+    <text x="87" y="80" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="500" fill="#1A7F37">open</text>
+    <text x="120" y="80" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">11-16 14:12</text>
+  </g>
+
+  <!-- Bottom nav -->
+  <rect x="0" y="764" width="390" height="80" fill="#FFFFFF"/>
+  <line x1="0" y1="764" x2="390" y2="764" stroke="#E8E8E8"/>
+
+  <g transform="translate(39, 780)" text-anchor="middle">
+    <circle cx="20" cy="12" r="10" fill="none" stroke="#6B6B6B" stroke-width="1.5"/>
+    <text x="20" y="42" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">¨</text>
+  </g>
+  <g transform="translate(136, 780)" text-anchor="middle">
+    <circle cx="20" cy="12" r="10" fill="#F4F4F4" stroke="#111111" stroke-width="1.5"/>
+    <text x="20" y="42" font-family="Segoe UI, Roboto, sans-serif" font-size="11" font-weight="600" fill="#111111">…ž</text>
+  </g>
+  <g transform="translate(233, 780)" text-anchor="middle">
+    <circle cx="20" cy="12" r="10" fill="none" stroke="#6B6B6B" stroke-width="1.5"/>
+    <text x="20" y="42" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">å</text>
+  </g>
+  <g transform="translate(330, 780)" text-anchor="middle">
+    <circle cx="20" cy="12" r="10" fill="none" stroke="#6B6B6B" stroke-width="1.5"/>
+    <text x="20" y="42" font-family="Segoe UI, Roboto, sans-serif" font-size="11" fill="#6B6B6B">„</text>
+  </g>
+</svg>
