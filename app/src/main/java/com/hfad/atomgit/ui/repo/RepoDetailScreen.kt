@@ -75,6 +75,7 @@ fun RepoDetailScreen(
     repo: String,
     onBack: () -> Unit,
     onOpenFile: (path: String, ref: String) -> Unit,
+    onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: RepoDetailViewModel = hiltViewModel(),
 ) {
@@ -93,6 +94,7 @@ fun RepoDetailScreen(
         onRetryReadme = viewModel::retryReadme,
         onLoadMore = viewModel::loadMore,
         onOpenFile = { path -> state.selectedRef?.let { onOpenFile(path, it.requestRef) } },
+        onOpenLink = onOpenLink,
         modifier = modifier,
     )
 }
@@ -110,6 +112,7 @@ internal fun RepoDetailContent(
     onRetryReadme: () -> Unit,
     onLoadMore: () -> Unit,
     onOpenFile: (String) -> Unit,
+    onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uriHandler = LocalUriHandler.current
@@ -202,6 +205,7 @@ internal fun RepoDetailContent(
                                         onRetryReadme = onRetryReadme,
                                         onChooseRef = { onTab(RepoDetailTab.Branches) },
                                         onUnsupported = { notice = "暂不支持预览此类型，请在网页查看" },
+                                        onOpenLink = onOpenLink,
                                     )
                                     RepoDetailTab.Commits -> pagedItems(
                                         page = state.commits,
@@ -245,6 +249,7 @@ private fun LazyListScope.filesItems(
     onRetryReadme: () -> Unit,
     onChooseRef: () -> Unit,
     onUnsupported: () -> Unit,
+    onOpenLink: (String) -> Unit,
 ) {
     item(key = "files-refbar") {
         Column {
@@ -312,7 +317,7 @@ private fun LazyListScope.filesItems(
                                 if (markdown.isBlank()) {
                                     Text("文件内容为空", style = MaterialTheme.typography.bodySmall)
                                 } else {
-                                    ReadmeMarkdown(markdown, Modifier.fillMaxWidth())
+                                    ReadmeMarkdown(markdown, onLink = onOpenLink, modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         }
