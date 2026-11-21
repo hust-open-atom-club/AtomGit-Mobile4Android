@@ -72,7 +72,7 @@ internal fun RepoDetailHeader(detail: RepoDetail, modifier: Modifier = Modifier)
                 overflow = TextOverflow.Ellipsis,
             )
             if (detail.isPrivate) {
-                Icon(Icons.Outlined.Lock, "私有仓库", Modifier.size(18.dp), tint = colors.onSurfaceVariant)
+                Icon(Icons.Outlined.Lock, "私有项目", Modifier.size(18.dp), tint = colors.onSurfaceVariant)
             }
         }
         detail.description?.let { description ->

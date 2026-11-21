@@ -126,7 +126,7 @@ fun ProfileReposScreen(
                         .weight(1f)
                         .focusRequester(focusRequester)
                         .testTag("repos-search"),
-                    placeholder = { Text("搜索仓库") },
+                    placeholder = { Text("搜索项目") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
@@ -145,7 +145,7 @@ fun ProfileReposScreen(
                 }
             } else {
                 Text(
-                    text = "仓库",
+                    text = "项目",
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier
                         .weight(1f)
@@ -233,7 +233,7 @@ fun ProfileReposScreen(
                     onRetry = viewModel::retry,
                 )
                 state.items.isEmpty() -> CenteredMessage(
-                    message = if (state.query.isBlank()) "没有仓库" else "没有找到匹配的仓库",
+                    message = if (state.query.isBlank()) "没有项目" else "没有找到匹配的项目",
                 )
                 else -> RepoList(
                     state = state,

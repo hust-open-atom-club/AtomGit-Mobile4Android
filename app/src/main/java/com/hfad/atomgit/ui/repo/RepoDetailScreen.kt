@@ -140,7 +140,7 @@ internal fun RepoDetailContent(
                                 state.detail?.htmlUrl?.let { url ->
                                     if (url.startsWith("https://") || url.startsWith("http://")) {
                                         runCatching { uriHandler.openUri(url) }.onFailure { notice = "无法打开网页" }
-                                    } else notice = "仓库网页地址不可用"
+                                    } else notice = "项目网页地址不可用"
                                 }
                             },
                         )
@@ -150,7 +150,7 @@ internal fun RepoDetailContent(
             val detail = state.detail
             when {
                 detail == null && state.isLoading -> LoadingPane()
-                detail == null && state.error != null -> ErrorPane(state.error.message("仓库不存在或无权访问"), onRetryHeader)
+                detail == null && state.error != null -> ErrorPane(state.error.message("项目不存在或无权访问"), onRetryHeader)
                 detail != null -> {
                     val holder = rememberSaveableStateHolder()
                     val revision = state.selectedRef
@@ -173,7 +173,7 @@ internal fun RepoDetailContent(
                                 item(key = "detail-header") {
                                     RepoDetailHeader(detail)
                                     if (state.error != null) {
-                                        InlineError(state.error.message("仓库信息暂时不可用"), onRetryHeader)
+                                        InlineError(state.error.message("项目信息暂时不可用"), onRetryHeader)
                                     }
                                 }
                                 stickyHeader(key = "detail-tabs") {
@@ -329,7 +329,7 @@ private fun <T> LazyListScope.pagedItems(
 ) {
     when {
         page.isLoading && page.items.isEmpty() -> item(key = "paged-loading") { PaneLoading() }
-        page.error != null && page.items.isEmpty() -> item(key = "paged-error") { PaneError(page.error.message("仓库或版本不存在"), onRetry) }
+        page.error != null && page.items.isEmpty() -> item(key = "paged-error") { PaneError(page.error.message("项目或版本不存在"), onRetry) }
         page.loaded && page.items.isEmpty() -> item(key = "paged-empty") { EmptyPane(empty) }
         else -> {
             items(page.items, key = itemKey) {
@@ -338,7 +338,7 @@ private fun <T> LazyListScope.pagedItems(
             }
             item(key = "paging-footer") {
                 when {
-                    page.error != null -> InlineError(page.error.message("仓库或版本不存在"), onRetry)
+                    page.error != null -> InlineError(page.error.message("项目或版本不存在"), onRetry)
                     page.isLoading || page.isLoadingMore -> Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(24.dp)) }
                     !page.endReached -> TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth().testTag("repo-load-more")) { Text("加载更多") }
                 }

@@ -116,7 +116,7 @@ class CodeViewerViewModel @Inject constructor(
                         isLoading = false,
                         content = "",
                         previewSupported = false,
-                        previewMessage = "暂不支持预览此类型的文件，请在仓库网页查看",
+                        previewMessage = "该文件暂不支持预览，请在项目网页查看",
                     )
                 }
                 return@launch

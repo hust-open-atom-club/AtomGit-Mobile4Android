@@ -4,7 +4,7 @@ internal data class CodePreview(val text: String, val message: String? = null, v
 
 internal fun prepareCodePreview(content: String): CodePreview {
     if (content.take(8192).any { it == '\u0000' }) {
-        return CodePreview("", "暂不支持预览二进制文件，请在仓库网页查看", supported = false)
+        return CodePreview("", "暂不支持预览二进制文件，请在项目网页查看", supported = false)
     }
     val candidate = content.take(200_000)
     val lines = candidate.lineSequence().take(3001).toList()

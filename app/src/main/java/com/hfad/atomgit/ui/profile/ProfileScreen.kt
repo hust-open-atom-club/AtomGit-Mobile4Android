@@ -130,7 +130,7 @@ fun ProfileScreen(
                             }
                             ProfileMenuRow(
                                 iconBackground = Color(0xFF2F363D),
-                                title = "仓库",
+                                title = "项目",
                                 count = repoCount?.toString().orEmpty(),
                                 onClick = onOpenRepos,
                                 icon = { MenuGlyph(Color.White) },

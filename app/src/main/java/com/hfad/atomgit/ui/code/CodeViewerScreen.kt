@@ -39,10 +39,12 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.hfad.atomgit.data.model.CodeViewerPreferences
 import com.hfad.atomgit.data.remote.error.ApiError
 import com.hfad.atomgit.ui.components.CodeBlock
 import com.hfad.atomgit.ui.theme.RepoFilterMenuDark
@@ -163,6 +165,22 @@ fun CodeViewerScreen(
             }
         }
 
+        CodeViewerBody(
+            state = state,
+            preferences = preferences,
+            onRetry = viewModel::retry,
+        )
+    }
+}
+
+@Composable
+internal fun CodeViewerBody(
+    state: CodeViewerUiState,
+    preferences: CodeViewerPreferences,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
         when {
             state.isLoading -> {
                 Box(
@@ -185,7 +203,7 @@ fun CodeViewerScreen(
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     TextButton(
-                        onClick = viewModel::retry,
+                        onClick = onRetry,
                         modifier = Modifier.testTag("code-viewer-retry"),
                     ) {
                         Text("重试")
@@ -199,28 +217,35 @@ fun CodeViewerScreen(
                         .fillMaxSize()
                         .padding(24.dp), contentAlignment = Alignment.Center
                 ) {
-                    Text(state.previewMessage.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        text = state.previewMessage.orEmpty(),
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             }
 
             else -> {
-                state.previewMessage?.let {
-                    Text(
-                        it,
+                Column(modifier = Modifier.fillMaxSize()) {
+                    state.previewMessage?.let {
+                        Text(
+                            it,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    CodeBlock(
+                        code = state.previewContent ?: state.content,
+                        preferences = preferences,
+                        path = state.path.ifBlank { state.displayPath },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall
+                            .fillMaxSize()
+                            .testTag("code-viewer-block"),
                     )
                 }
-                CodeBlock(
-                    code = state.previewContent ?: state.content,
-                    preferences = preferences,
-                    path = state.path.ifBlank { state.displayPath },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .testTag("code-viewer-block"),
-                )
             }
         }
     }
