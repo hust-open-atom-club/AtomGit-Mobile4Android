@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -43,7 +45,7 @@ import com.hfad.atomgit.ui.code.codeLanguageFromPath
 import com.hfad.atomgit.ui.code.highlightCode
 import com.hfad.atomgit.ui.code.syntaxColorsFor
 import com.hfad.atomgit.ui.theme.AccentBlue
-import com.hfad.atomgit.ui.theme.AccentBlueDark
+import com.hfad.atomgit.ui.theme.AccentBlueBright
 import com.hfad.atomgit.ui.theme.Ink
 import com.hfad.atomgit.ui.theme.InkMutedDark
 import com.hfad.atomgit.ui.theme.Paper
@@ -65,7 +67,9 @@ fun CodeBlock(
     path: String = "",
     language: CodeLanguage = codeLanguageFromPath(path),
 ) {
-    val dark = preferences.alwaysDarkTheme
+    // 始终深色优先；否则跟随 App 主题
+    val dark = preferences.alwaysDarkTheme ||
+        MaterialTheme.colorScheme.background.luminance() < 0.5f
     val background = if (dark) PaperDark else Paper
     val lineNumberBackground = if (dark) PaperDimDark else PaperDim
     val lineNumberColor = if (dark) InkMutedDark else Ink
@@ -191,7 +195,7 @@ private fun CodeLineRow(
     val interaction = remember { MutableInteractionSource() }
     // 深色代码区用亮蓝 ripple，灰色在深底上看不清
     val pressRipple = ripple(
-        color = if (darkBackground) AccentBlueDark else AccentBlue,
+        color = if (darkBackground) AccentBlueBright else AccentBlue,
     )
     Row(
         modifier = Modifier

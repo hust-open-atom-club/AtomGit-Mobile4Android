@@ -8,6 +8,7 @@ const val DefaultCodeFontSizeSp: Int = 13
 /** 代码查看页显示偏好。 */
 data class CodeViewerPreferences(
     val showLineNumbers: Boolean = true,
+    /** 开启后代码区固定深色；关闭则跟随 App 浅/深色主题。 */
     val alwaysDarkTheme: Boolean = false,
     val overrideSystemFontSize: Boolean = false,
     /** 仅在 [overrideSystemFontSize] 为 true 时生效。 */
