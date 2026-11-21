@@ -308,8 +308,12 @@ private fun LazyListScope.filesItems(
                             readme.isLoading -> CircularProgressIndicator(Modifier.size(24.dp))
                             readme.error != null -> InlineError(readme.error.message("README 不存在"), onRetryReadme)
                             else -> {
-                                Text(readme.preview.orEmpty().ifEmpty { "文件内容为空" }, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, maxLines = 30, overflow = TextOverflow.Ellipsis)
-                                readme.path?.let { path -> TextButton(onClick = { onFile(path) }) { Text("查看全文") } }
+                                val markdown = readme.preview.orEmpty()
+                                if (markdown.isBlank()) {
+                                    Text("文件内容为空", style = MaterialTheme.typography.bodySmall)
+                                } else {
+                                    ReadmeMarkdown(markdown, Modifier.fillMaxWidth())
+                                }
                             }
                         }
                     }

@@ -45,6 +45,7 @@ class DefaultRepoContentRepository @Inject constructor(
             encoding = dto.encoding,
             size = dto.size,
             htmlUrl = dto.htmlUrl,
+            downloadUrl = dto.downloadUrl,
         )
     }
 }

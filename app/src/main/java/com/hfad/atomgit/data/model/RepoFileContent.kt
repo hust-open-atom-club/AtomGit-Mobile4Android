@@ -8,4 +8,6 @@ data class RepoFileContent(
     val encoding: String?,
     val size: Long?,
     val htmlUrl: String?,
+    /** raw 下载地址，图片类资源加载。 */
+    val downloadUrl: String? = null,
 )

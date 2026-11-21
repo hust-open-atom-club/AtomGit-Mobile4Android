@@ -173,12 +173,12 @@ class RepoDetailViewModelTest {
         assertEquals(1, repository.branchCalls)
     }
 
-    @Test fun readmeUsesActualCaseAndPathAndLimitsPreviewTo30Lines() = runTest {
+    @Test fun readmeUsesActualCaseAndPathAndKeepsFullContent() = runTest {
         repository.directory = { _, _ -> ApiResult.Success(listOf(file("ReadMe.MD"), file("README.txt"))) }
         contents.result = ApiResult.Success(RepoFileContent("ReadMe.MD", "ReadMe.MD", (1..50).joinToString("\n"), "base64", null, null))
         val vm = start()
         assertEquals("ReadMe.MD" to "develop", contents.calls.single())
-        assertEquals(30, vm.state.value.readme.preview!!.lines().size)
+        assertEquals(50, vm.state.value.readme.preview!!.lines().size)
         vm.openDirectory("src")
         vm.openDirectory("")
         assertEquals(1, contents.calls.size)
