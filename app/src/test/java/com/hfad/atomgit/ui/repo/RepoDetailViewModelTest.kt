@@ -265,5 +265,8 @@ class RepoDetailViewModelTest {
             calls += path to ref
             return loader?.invoke() ?: result
         }
+
+        override suspend fun getFileBytes(owner: String, repo: String, path: String, ref: String): ApiResult<ByteArray> =
+            ApiResult.Success(byteArrayOf(1, 2, 3))
     }
 }

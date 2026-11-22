@@ -71,3 +71,11 @@ internal fun rewriteReadme(
     }
     return result
 }
+
+/** README 里图片先按路径存字节，渲染时用此伪链接取 */
+internal fun blobLink(path: String): String = "atomgit-image:$path"
+
+internal data class PreparedReadme(
+    val markdown: String,
+    val images: Map<String, ByteArray>,
+)

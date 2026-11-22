@@ -17,6 +17,14 @@ interface RepoContentRepository {
         path: String,
         ref: String,
     ): ApiResult<RepoFileContent>
+
+    /** 二进制内容，按原始字节返回，不做文本解码 */
+    suspend fun getFileBytes(
+        owner: String,
+        repo: String,
+        path: String,
+        ref: String,
+    ): ApiResult<ByteArray>
 }
 
 @Singleton
@@ -47,6 +55,22 @@ class DefaultRepoContentRepository @Inject constructor(
             htmlUrl = dto.htmlUrl,
             downloadUrl = dto.downloadUrl,
         )
+    }
+
+    override suspend fun getFileBytes(
+        owner: String,
+        repo: String,
+        path: String,
+        ref: String,
+    ): ApiResult<ByteArray> = apiCall {
+        val dto = api.getContentFile(
+            owner = owner,
+            repo = repo,
+            path = encodeContentPath(path),
+            ref = ref,
+        )
+        val compact = dto.content.orEmpty().replace("\\s".toRegex(), "")
+        compact.decodeBase64()?.toByteArray() ?: ByteArray(0)
     }
 }
 

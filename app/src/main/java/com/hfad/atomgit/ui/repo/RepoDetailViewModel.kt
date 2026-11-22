@@ -50,6 +50,7 @@ data class RepoDirectoryState(
 data class RepoReadmeState(
     val path: String? = null,
     val preview: String? = null,
+    val images: Map<String, ByteArray> = emptyMap(),
     val loaded: Boolean = false,
     val isLoading: Boolean = false,
     val error: ApiError? = null,
@@ -258,11 +259,21 @@ class RepoDetailViewModel @Inject constructor(
             val result = contentRepository.getFile(snapshot.owner, snapshot.repo, path, ref.requestRef)
             if (epoch != refEpoch || repoToken != repoEpoch || request != readmeRequest) return@launch
             val next = when (result) {
-                is ApiResult.Success -> RepoReadmeState(
-                    path = path,
-                    preview = prepareReadme(snapshot.owner, snapshot.repo, ref.requestRef, path, result.value.content),
-                    loaded = true,
-                )
+                is ApiResult.Success -> {
+                    val prepared = prepareReadme(
+                        owner = snapshot.owner,
+                        repo = snapshot.repo,
+                        ref = ref.requestRef,
+                        path = path,
+                        content = result.value.content,
+                    )
+                    RepoReadmeState(
+                        path = path,
+                        preview = prepared.markdown,
+                        images = prepared.images,
+                        loaded = true,
+                    )
+                }
                 is ApiResult.Failure -> if (result.error == ApiError.NotFound) RepoReadmeState(loaded = true)
                     else RepoReadmeState(path = path, loaded = true, error = result.error)
             }
@@ -271,31 +282,38 @@ class RepoDetailViewModel @Inject constructor(
         }
     }
 
-    /// 图片与相对链接要换成仓库地址
+    /// 图片与相对链接要换成仓库地址；图片直接取字节，避免走 raw 域名
     private suspend fun prepareReadme(
         owner: String,
         repo: String,
         ref: String,
         path: String,
         content: String,
-    ): String {
+    ): PreparedReadme {
         val markdown = content.take(MaxReadmeLength)
         val baseDir = path.substringBeforeLast('/', "")
-        val images = collectReadmeImages(markdown, baseDir).take(MaxReadmeImages)
-        val imageUrls = coroutineScope {
-            images.map { imagePath ->
+        val imagePaths = collectReadmeImages(markdown, baseDir).take(MaxReadmeImages)
+        val loaded = coroutineScope {
+            imagePaths.map { imagePath ->
                 async {
-                    val file = contentRepository.getFile(owner, repo, imagePath, ref)
-                    imagePath to (file as? ApiResult.Success)?.value?.downloadUrl
+                    val bytes = (contentRepository.getFileBytes(owner, repo, imagePath, ref) as? ApiResult.Success)?.value
+                    if (bytes == null || bytes.isEmpty() || bytes.size > MaxReadmeImageBytes) null
+                    else imagePath to bytes
                 }
             }.awaitAll()
-        }.mapNotNull { (imagePath, url) -> url?.let { imagePath to it } }.toMap()
-        return rewriteReadme(markdown, baseDir, owner, repo, ref, path, imageUrls)
+        }.filterNotNull()
+        val links = loaded.associate { (imagePath, _) -> imagePath to blobLink(imagePath) }
+        val images = loaded.associate { (imagePath, bytes) -> blobLink(imagePath) to bytes }
+        return PreparedReadme(
+            markdown = rewriteReadme(markdown, baseDir, owner, repo, ref, path, links),
+            images = images,
+        )
     }
 
     private companion object {
         const val MaxReadmeLength = 64_000
         const val MaxReadmeImages = 10
+        const val MaxReadmeImageBytes = 2 * 1024 * 1024
     }
 
     fun refresh() {

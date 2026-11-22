@@ -60,5 +60,8 @@ class CodeViewerViewModelTest {
             this.ref = ref
             return ApiResult.Success(RepoFileContent(path, path.substringAfterLast('/'), text, null, text.length.toLong(), null))
         }
+
+        override suspend fun getFileBytes(owner: String, repo: String, path: String, ref: String): ApiResult<ByteArray> =
+            ApiResult.Success(text.toByteArray())
     }
 }
