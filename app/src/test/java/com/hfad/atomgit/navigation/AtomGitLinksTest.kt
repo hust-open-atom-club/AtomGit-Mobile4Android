@@ -35,6 +35,11 @@ class AtomGitLinksTest {
         )
     }
 
+    @Test fun unknownRepositoryPagesFallBackToBrowser() {
+        assertNull(parseAtomGitLink("https://atomgit.com/o/r/issues/1"))
+        assertNull(parseAtomGitLink("https://atomgit.com/o/r/settings"))
+    }
+
     @Test fun ignoresOtherHostsAndSchemes() {
         assertNull(parseAtomGitLink("https://example.com/o/r"))
         assertNull(parseAtomGitLink("ftp://atomgit.com/o/r"))

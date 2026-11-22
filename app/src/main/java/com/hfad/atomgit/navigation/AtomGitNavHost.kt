@@ -20,7 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -28,6 +28,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.hfad.atomgit.ui.code.CodeViewerScreen
+import com.hfad.atomgit.ui.components.openExternalLink
 import com.hfad.atomgit.ui.code.CodeViewerSettingsScreen
 import com.hfad.atomgit.ui.feed.FeedScreen
 import com.hfad.atomgit.ui.follow.FollowListScreen
@@ -117,7 +118,7 @@ fun AtomGitNavHost(
                         )
                     }
                     entry<RepoDetailRoute> { route ->
-                        val uriHandler = LocalUriHandler.current
+                        val context = LocalContext.current
                         RepoDetailScreen(
                             owner = route.owner,
                             repo = route.repo,
@@ -134,7 +135,7 @@ fun AtomGitNavHost(
                                         navState.push(CodeViewerRoute(link.owner, link.repo, link.path, link.ref))
                                     link != null && !sameRepo ->
                                         navState.push(RepoDetailRoute(link.owner, link.repo))
-                                    else -> runCatching { uriHandler.openUri(url) }
+                                    else -> openExternalLink(context, url)
                                 }
                             },
                         )

@@ -39,13 +39,16 @@ fun parseAtomGitLink(url: String): AtomGitLink? {
     if (segments.size < 2) return null
     val owner = segments[0]
     val repo = segments[1].removeSuffix(".git")
+    if (segments.size == 2) return AtomGitLink.Repo(owner, repo)
+    val kind = segments[2]
+    // issues、pulls 等页面还没有对应实现，交回浏览器
+    if (kind != "blob" && kind != "tree") return null
     if (segments.size < 4) return AtomGitLink.Repo(owner, repo)
     val ref = segments[3]
     val path = segments.drop(4).joinToString("/")
-    return when (segments[2]) {
+    return when (kind) {
         "blob" -> if (path.isEmpty()) AtomGitLink.Repo(owner, repo) else AtomGitLink.File(owner, repo, ref, path)
-        "tree" -> AtomGitLink.Directory(owner, repo, ref, path)
-        else -> AtomGitLink.Repo(owner, repo)
+        else -> AtomGitLink.Directory(owner, repo, ref, path)
     }
 }
 
