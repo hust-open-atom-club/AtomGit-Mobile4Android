@@ -24,13 +24,14 @@ class CodeViewerViewModelTest {
         override suspend fun setWordWrap(enabled: Boolean) = Unit
     }
 
-    @Test fun knownBinaryDoesNotDownloadAndIsNotReloadedOnReturn() = runTest {
+    @Test fun imageFileLoadsBytesForPreview() = runTest {
         val vm = CodeViewerViewModel(contents, preferences)
         repeat(2) { vm.start("o", "r", "image.PNG", "main", false) }
         assertEquals(0, contents.calls)
+        assertEquals(1, contents.byteCalls)
         assertFalse(vm.state.value.previewSupported)
         assertFalse(vm.state.value.isLoading)
-        assertNotNull(vm.state.value.previewMessage)
+        assertNotNull(vm.state.value.imageBytes)
     }
 
     @Test fun emptyTextFileIsLoadedOnlyOnce() = runTest {
@@ -53,6 +54,7 @@ class CodeViewerViewModelTest {
 
     private class FakeContents : RepoContentRepository {
         var calls = 0
+        var byteCalls = 0
         var text = ""
         var ref = ""
         override suspend fun getFile(owner: String, repo: String, path: String, ref: String): ApiResult<RepoFileContent> {
@@ -61,7 +63,9 @@ class CodeViewerViewModelTest {
             return ApiResult.Success(RepoFileContent(path, path.substringAfterLast('/'), text, null, text.length.toLong(), null))
         }
 
-        override suspend fun getFileBytes(owner: String, repo: String, path: String, ref: String): ApiResult<ByteArray> =
-            ApiResult.Success(text.toByteArray())
+        override suspend fun getFileBytes(owner: String, repo: String, path: String, ref: String): ApiResult<ByteArray> {
+            byteCalls++
+            return ApiResult.Success(text.toByteArray())
+        }
     }
 }

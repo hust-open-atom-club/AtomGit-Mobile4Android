@@ -31,6 +31,7 @@ data class CodeViewerUiState(
     val isLoading: Boolean = false,
     val error: ApiError? = null,
     val previewMessage: String? = null,
+    val imageBytes: ByteArray? = null,
     val previewSupported: Boolean = true,
     val previewContent: String? = null,
 ) {
@@ -110,6 +111,28 @@ class CodeViewerViewModel @Inject constructor(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            if (isImagePath(snapshot.path)) {
+                when (
+                    val result = contentRepository.getFileBytes(
+                        owner = snapshot.owner,
+                        repo = snapshot.repo,
+                        path = snapshot.path,
+                        ref = snapshot.ref.ifBlank { "HEAD" },
+                    )
+                ) {
+                    is ApiResult.Success -> _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = null,
+                            previewSupported = false,
+                            previewMessage = null,
+                            imageBytes = result.value,
+                        )
+                    }
+                    is ApiResult.Failure -> _state.update { it.copy(isLoading = false, error = result.error) }
+                }
+                return@launch
+            }
             if (isKnownBinaryPath(snapshot.path)) {
                 _state.update {
                     it.copy(
@@ -152,4 +175,9 @@ class CodeViewerViewModel @Inject constructor(
             }
         }
     }
+}
+/** 图片文件直接按图片预览。 */
+internal fun isImagePath(path: String): Boolean = when (path.substringAfterLast('.', "").lowercase()) {
+    "png", "jpg", "jpeg", "gif", "webp", "bmp" -> true
+    else -> false
 }

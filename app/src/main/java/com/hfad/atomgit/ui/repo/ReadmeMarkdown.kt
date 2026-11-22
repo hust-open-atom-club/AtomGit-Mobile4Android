@@ -1,5 +1,6 @@
 package com.hfad.atomgit.ui.repo
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import kotlinx.coroutines.withContext
 internal fun ReadmeMarkdown(
     markdown: String,
     images: Map<String, ByteArray> = emptyMap(),
+    onImageClick: (String) -> Unit = {},
     onLink: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -49,7 +51,7 @@ internal fun ReadmeMarkdown(
             override fun openUri(uri: String) = onLink(uri)
         }
     }
-    val transformer = remember(images) { ReadmeImageTransformer(images) }
+    val transformer = remember(images, onImageClick) { ReadmeImageTransformer(images, onImageClick) }
     val base = MaterialTheme.typography
     val linkStyle = SpanStyle(
         color = MaterialTheme.colorScheme.primary,
@@ -85,8 +87,11 @@ internal fun ReadmeMarkdown(
     }
 }
 
+private const val IMAGE_LINK_PREFIX = "atomgit-image:"
+
 private class ReadmeImageTransformer(
     private val images: Map<String, ByteArray>,
+    private val onImageClick: (String) -> Unit,
 ) : ImageTransformer {
 
     @Composable
@@ -99,8 +104,10 @@ private class ReadmeImageTransformer(
             }
         }
         val image = bitmap ?: return null
+        val path = link.removePrefix(IMAGE_LINK_PREFIX)
         return ImageData(
             painter = remember(image) { BitmapPainter(image) },
+            modifier = Modifier.clickable { onImageClick(path) },
             contentScale = ContentScale.FillWidth,
         )
     }

@@ -1,13 +1,19 @@
 package com.hfad.atomgit.ui.code
 
+import android.graphics.BitmapFactory
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +34,8 @@ import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,13 +43,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.CodeViewerPreferences
@@ -211,6 +224,8 @@ internal fun CodeViewerBody(
                 }
             }
 
+            state.imageBytes != null -> ImagePreview(state.imageBytes)
+
             !state.previewSupported -> {
                 Box(
                     Modifier
@@ -279,4 +294,32 @@ private fun ApiError?.toMessage(): String = when (this) {
     ApiError.WriteUncertain -> "加载失败"
     is ApiError.Partial -> "加载失败"
     null -> "加载失败"
+}
+@Composable
+private fun ImagePreview(bytes: ByteArray) {
+    val bitmap by produceState<ImageBitmap?>(initialValue = null, bytes) {
+        value = withContext(Dispatchers.Default) {
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        }
+    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("code-viewer-image"),
+        contentAlignment = Alignment.Center,
+    ) {
+        val image = bitmap
+        if (image == null) {
+            CircularProgressIndicator()
+        } else {
+            Image(
+                bitmap = image,
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                contentScale = ContentScale.FillWidth,
+            )
+        }
+    }
 }

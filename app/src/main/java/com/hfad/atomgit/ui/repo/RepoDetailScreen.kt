@@ -316,6 +316,7 @@ private fun LazyListScope.filesItems(
                                     ReadmeMarkdown(
                                         markdown = markdown,
                                         images = readme.images,
+                                        onImageClick = onFile,
                                         onLink = onOpenLink,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
