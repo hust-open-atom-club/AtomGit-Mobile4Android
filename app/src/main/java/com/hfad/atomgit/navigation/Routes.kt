@@ -52,9 +52,17 @@ data class CodeViewerRoute(
     val sample: Boolean = false,
 ) : Route
 
-/** 共用详情路由 */
+/** 共用 Issue 详情路由 */
 @Serializable
 data class IssueDetailRoute(
+    val owner: String,
+    val repo: String,
+    val number: Int,
+) : Route
+
+/** 共用 PR 详情路由（阶段 1 仅占位入口） */
+@Serializable
+data class PullDetailRoute(
     val owner: String,
     val repo: String,
     val number: Int,

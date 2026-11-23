@@ -1,0 +1,54 @@
+{
+  "name": "AtomGit Todo Screen",
+  "frame": { "width": 390, "height": 844, "unit": "px" },
+  "colors": {
+    "ink": "#111111",
+    "inkMuted": "#6B6B6B",
+    "paper": "#FFFFFF",
+    "paperDim": "#F4F4F4",
+    "hairline": "#E0E0E0",
+    "indicator": "#E8E8E8",
+    "accentBlue": "#1A73E8",
+    "issueGreen": "#1A7F37",
+    "issueGreenContainer": "#DCFFE4",
+    "prPurple": "#8250DF",
+    "prPurpleContainer": "#F0E7FF",
+    "statusClosed": "#CF222E",
+    "statusClosedContainer": "#FFEBE9"
+  },
+  "radius": {
+    "card": 12,
+    "badge": 10,
+    "chip": 999,
+    "status": 6,
+    "emptyIcon": 20
+  },
+  "spacing": {
+    "pagePaddingX": 12,
+    "headerPaddingX": 16,
+    "cardGap": 10,
+    "cardPadding": 14,
+    "rowGap": 8
+  },
+  "typography": {
+    "title": { "size": 22, "weight": 700 },
+    "tab": { "size": 14, "weightSelected": 600, "weight": 500 },
+    "cardTitle": { "size": 14, "weight": 600 },
+    "meta": { "size": 12, "weight": 500 },
+    "chip": { "size": 12, "weight": 500 }
+  },
+  "components": [
+    {
+      "name": "Header",
+      "children": ["Title 待办", "CountPill", "PrimaryTabRow", "SourceChipRow"]
+    },
+    {
+      "name": "TodoCard",
+      "props": ["kindBadge", "title", "number", "repoPath", "statusChip", "updatedAt"]
+    },
+    {
+      "name": "EmptyState",
+      "props": ["icon", "message", "retry"]
+    }
+  ]
+}

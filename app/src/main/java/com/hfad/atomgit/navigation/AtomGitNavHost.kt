@@ -34,6 +34,7 @@ import com.hfad.atomgit.ui.issue.IssueDetailScreen
 import com.hfad.atomgit.ui.notification.NotificationScreen
 import com.hfad.atomgit.ui.profile.ProfileReposScreen
 import com.hfad.atomgit.ui.profile.ProfileScreen
+import com.hfad.atomgit.ui.pull.PullDetailScreen
 import com.hfad.atomgit.ui.repo.RepoDetailScreen
 import com.hfad.atomgit.ui.settings.SettingsScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
@@ -86,7 +87,12 @@ fun AtomGitNavHost(
                     entry<TodoRoute> {
                         TodoScreen(
                             listState = listStates.getValue(TopLevelTab.Todo),
-                            onOpenIssue = { owner, repo, number -> navState.push(IssueDetailRoute(owner, repo, number)) },
+                            onOpenIssue = { owner, repo, number ->
+                                navState.push(IssueDetailRoute(owner, repo, number))
+                            },
+                            onOpenPull = { owner, repo, number ->
+                                navState.push(PullDetailRoute(owner, repo, number))
+                            },
                         )
                     }
                     entry<NotificationRoute> {
@@ -163,6 +169,12 @@ fun AtomGitNavHost(
                     }
                     entry<IssueDetailRoute> { route ->
                         IssueDetailScreen(
+                            route = route,
+                            onBack = { navState.pop() },
+                        )
+                    }
+                    entry<PullDetailRoute> { route ->
+                        PullDetailScreen(
                             route = route,
                             onBack = { navState.pop() },
                         )
