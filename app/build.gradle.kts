@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.markdown.renderer)
     implementation(libs.markdown.renderer.m3)
     implementation(libs.markdown.renderer.coil3)
+    implementation(libs.markdown.renderer.code)
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

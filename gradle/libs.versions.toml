@@ -64,6 +64,7 @@ androidx-browser = { group = "androidx.browser", name = "browser", version.ref =
 markdown-renderer = { group = "com.mikepenz", name = "multiplatform-markdown-renderer", version.ref = "markdownRenderer" }
 markdown-renderer-m3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "markdownRenderer" }
 markdown-renderer-coil3 = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-coil3", version.ref = "markdownRenderer" }
+markdown-renderer-code = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-code", version.ref = "markdownRenderer" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }

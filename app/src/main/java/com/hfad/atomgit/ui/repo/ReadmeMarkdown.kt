@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -51,7 +52,12 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import coil3.compose.AsyncImage
+import dev.snipme.highlights.Highlights
+import dev.snipme.highlights.model.SyntaxThemes
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
+import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
+import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.compose.LocalImageWidth
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
@@ -81,6 +87,10 @@ internal fun ReadmeMarkdown(
         object : UriHandler {
             override fun openUri(uri: String) = onLink(uri)
         }
+    }
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val highlightsBuilder = remember(dark) {
+        Highlights.Builder().theme(SyntaxThemes.atom(darkMode = dark))
     }
     val transformer = remember(images) {
         ReadmeImageTransformer(images) { target -> preview = target }
@@ -116,6 +126,24 @@ internal fun ReadmeMarkdown(
             modifier = modifier.fillMaxWidth(),
             typography = typography,
             imageTransformer = transformer,
+            components = markdownComponents(
+                codeBlock = {
+                    MarkdownHighlightedCodeBlock(
+                        content = it.content,
+                        node = it.node,
+                        style = it.typography.code,
+                        highlightsBuilder = highlightsBuilder,
+                    )
+                },
+                codeFence = {
+                    MarkdownHighlightedCodeFence(
+                        content = it.content,
+                        node = it.node,
+                        style = it.typography.code,
+                        highlightsBuilder = highlightsBuilder,
+                    )
+                },
+            ),
         )
     }
     preview?.let { target ->
