@@ -157,6 +157,7 @@ private fun RepoDetailDarkPreview() {
             onRetryReadme = {},
             onLoadMore = {},
             onOpenFile = {},
+            onOpenLink = {},
         )
     }
 }
@@ -177,6 +178,7 @@ private fun RepoDetailLightPreview() {
             onRetryReadme = {},
             onLoadMore = {},
             onOpenFile = {},
+            onOpenLink = {},
         )
     }
 }

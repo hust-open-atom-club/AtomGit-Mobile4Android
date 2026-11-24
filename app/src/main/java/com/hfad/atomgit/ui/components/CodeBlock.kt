@@ -21,6 +21,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -42,8 +44,10 @@ import androidx.compose.ui.unit.sp
 import com.hfad.atomgit.data.model.CodeViewerPreferences
 import com.hfad.atomgit.ui.code.CodeLanguage
 import com.hfad.atomgit.ui.code.codeLanguageFromPath
-import com.hfad.atomgit.ui.code.highlightCode
-import com.hfad.atomgit.ui.code.syntaxColorsFor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import com.hfad.atomgit.ui.code.highlightCodeText
+import com.hfad.atomgit.ui.code.splitByLines
 import com.hfad.atomgit.ui.theme.AccentBlue
 import com.hfad.atomgit.ui.theme.AccentBlueBright
 import com.hfad.atomgit.ui.theme.Ink
@@ -73,7 +77,6 @@ fun CodeBlock(
     val background = if (dark) PaperDark else Paper
     val lineNumberBackground = if (dark) PaperDimDark else PaperDim
     val lineNumberColor = if (dark) InkMutedDark else Ink
-    val colors = remember(dark) { syntaxColorsFor(dark) }
     val lines = remember(code) {
         if (code.isEmpty()) listOf("") else code.split('\n')
     }
@@ -114,6 +117,10 @@ fun CodeBlock(
         }
     }
     val horizontalScroll = rememberScrollState()
+    val highlightedCode by produceState(AnnotatedString(code), code, language, dark) {
+        value = withContext(Dispatchers.Default) { highlightCodeText(code, language, dark) }
+    }
+    val highlightedLines = remember(highlightedCode) { highlightedCode.splitByLines() }
 
     val content: @Composable () -> Unit = {
         Box(
@@ -136,9 +143,7 @@ fun CodeBlock(
                     items = lines,
                     key = { index, _ -> index },
                 ) { index, line ->
-                    val highlighted = remember(line, language, colors) {
-                        highlightCode(line, language, colors)
-                    }
+                    val highlighted = highlightedLines.getOrElse(index) { AnnotatedString(line) }
                     CodeLineRow(
                         lineNumber = index + 1,
                         highlighted = highlighted,
