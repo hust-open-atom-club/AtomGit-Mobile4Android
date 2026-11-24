@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -59,12 +60,16 @@ import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeBlock
 import com.mikepenz.markdown.compose.elements.MarkdownHighlightedCodeFence
 import com.mikepenz.markdown.compose.LocalImageWidth
+import com.mikepenz.markdown.compose.MarkdownElement
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownTypography
 import com.mikepenz.markdown.model.ImageData
 import com.mikepenz.markdown.model.ImageTransformer
 import com.mikepenz.markdown.model.ImageWidth
 import com.mikepenz.markdown.model.PlaceholderConfig
+import com.mikepenz.markdown.model.State
+import com.mikepenz.markdown.model.markdownAnimations
+import org.intellij.markdown.ast.ASTNode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.core.graphics.drawable.toDrawable
@@ -75,8 +80,9 @@ import androidx.core.graphics.drawable.toDrawable
  * 任意图片点击后打开全屏预览。
  */
 @Composable
-internal fun ReadmeMarkdown(
-    markdown: String,
+internal fun ReadmeMarkdownBlock(
+    markdown: State.Success,
+    node: ASTNode,
     images: Map<String, ByteArray> = emptyMap(),
     onImageClick: (String) -> Unit = {},
     onLink: (String) -> Unit = {},
@@ -122,10 +128,14 @@ internal fun ReadmeMarkdown(
         LocalImageWidth provides ImageWidth.MAX_WIDTH,
     ) {
         Markdown(
-            content = markdown,
+            state = markdown,
             modifier = modifier.fillMaxWidth(),
+            success = { document, components, blockModifier ->
+                Column(blockModifier) { MarkdownElement(node, components, document.content) }
+            },
             typography = typography,
             imageTransformer = transformer,
+            animations = markdownAnimations(animateTextSize = { this }),
             components = markdownComponents(
                 codeBlock = {
                     MarkdownHighlightedCodeBlock(
