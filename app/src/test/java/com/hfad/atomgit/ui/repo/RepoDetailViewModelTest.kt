@@ -16,6 +16,7 @@ import com.hfad.atomgit.data.remote.error.ApiResult
 import com.hfad.atomgit.data.repository.RepoContentRepository
 import com.hfad.atomgit.data.repository.RepoDetailRepository
 import com.hfad.atomgit.data.repository.UserProfileRepository
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Rule
@@ -25,17 +26,23 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class RepoDetailViewModelTest {
-    @get:Rule val dispatcher = MainDispatcherRule()
+    @get:Rule
+    val dispatcher = MainDispatcherRule()
     private val repository = FakeRepository()
     private val contents = FakeContents()
     private val profiles = FakeProfiles()
 
-    private fun start() = RepoDetailViewModel(repository, contents, profiles).also { it.start("owner", "repo") }
-    private fun file(path: String) = RepoEntry(path.substringAfterLast('/'), path, RepoEntryKind.File)
+    private fun start() =
+        RepoDetailViewModel(repository, contents, profiles).also { it.start("owner", "repo") }
+
+    private fun file(path: String) =
+        RepoEntry(path.substringAfterLast('/'), path, RepoEntryKind.File)
+
     private fun commit(sha: String) = CommitSummary(sha, "message")
     private fun <T> page(vararg items: T) = ApiResult.Success(PagedItems(items.toList()))
 
-    @Test fun initialLoadUsesDefaultBranchAndDoesNotFetchOtherTabs() = runTest {
+    @Test
+    fun initialLoadUsesDefaultBranchAndDoesNotFetchOtherTabs() = runTest {
         val vm = start()
         assertEquals("develop", vm.state.value.selectedRef?.name)
         assertEquals(listOf("" to "develop"), repository.directories)
@@ -46,7 +53,8 @@ class RepoDetailViewModelTest {
         assertEquals(1, repository.detailCalls)
     }
 
-    @Test fun successfulEmptyTabIsCached() = runTest {
+    @Test
+    fun successfulEmptyTabIsCached() = runTest {
         val vm = start()
         vm.selectTab(RepoDetailTab.Tags)
         vm.selectTab(RepoDetailTab.Files)
@@ -56,8 +64,17 @@ class RepoDetailViewModelTest {
         assertTrue(vm.state.value.tags.endReached)
     }
 
-    @Test fun ownerProfileFillsMissingHeaderWithoutReloadingDirectory() = runTest {
-        profiles.loader = { ApiResult.Success(UserProfile(it, name = "作者昵称", avatarUrl = "https://example.com/avatar.png")) }
+    @Test
+    fun ownerProfileFillsMissingHeaderWithoutReloadingDirectory() = runTest {
+        profiles.loader = {
+            ApiResult.Success(
+                UserProfile(
+                    it,
+                    name = "作者昵称",
+                    avatarUrl = "https://example.com/avatar.png"
+                )
+            )
+        }
         val vm = start()
         assertEquals("作者昵称", vm.state.value.detail?.ownerName)
         assertEquals("https://example.com/avatar.png", vm.state.value.detail?.ownerAvatarUrl)
@@ -65,7 +82,8 @@ class RepoDetailViewModelTest {
         assertNull(vm.state.value.error)
     }
 
-    @Test fun ownerProfileFailureDoesNotFailRepositoryHeader() = runTest {
+    @Test
+    fun ownerProfileFailureDoesNotFailRepositoryHeader() = runTest {
         profiles.loader = { ApiResult.Failure(ApiError.Network) }
         val vm = start()
         assertNotNull(vm.state.value.detail)
@@ -73,13 +91,23 @@ class RepoDetailViewModelTest {
         assertTrue(vm.state.value.files.loaded)
     }
 
-    @Test fun completeOwnerDetailsDoNotRequestProfileAgain() = runTest {
-        repository.detailFactory = { owner, repo -> RepoDetail(owner, repo, repo, ownerName = "作者", ownerAvatarUrl = "https://example.com/a.png") }
+    @Test
+    fun completeOwnerDetailsDoNotRequestProfileAgain() = runTest {
+        repository.detailFactory = { owner, repo ->
+            RepoDetail(
+                owner,
+                repo,
+                repo,
+                ownerName = "作者",
+                ownerAvatarUrl = "https://example.com/a.png"
+            )
+        }
         start()
         assertTrue(profiles.calls.isEmpty())
     }
 
-    @Test fun oldOwnerProfileCannotUpdateAnotherRepository() = runTest {
+    @Test
+    fun oldOwnerProfileCannotUpdateAnotherRepository() = runTest {
         var pending: Continuation<ApiResult<UserProfile>>? = null
         profiles.loader = { login ->
             if (login == "owner") suspendCoroutine<ApiResult<UserProfile>> { pending = it }
@@ -92,7 +120,8 @@ class RepoDetailViewModelTest {
         assertEquals("next-owner", vm.state.value.detail?.owner)
     }
 
-    @Test fun paginationDeduplicatesAndStopsOnlyOnEmptyPageWithoutHeaders() = runTest {
+    @Test
+    fun paginationDeduplicatesAndStopsOnlyOnEmptyPageWithoutHeaders() = runTest {
         repository.commits.addAll(listOf(page(commit("a")), page(commit("a"), commit("b")), page()))
         val vm = start()
         vm.selectTab(RepoDetailTab.Commits)
@@ -105,8 +134,15 @@ class RepoDetailViewModelTest {
         assertTrue(vm.state.value.commits.endReached)
     }
 
-    @Test fun failedPaginationKeepsDataAndRetriesSamePage() = runTest {
-        repository.commits.addAll(listOf(page(commit("a")), ApiResult.Failure(ApiError.Network), page(commit("b"))))
+    @Test
+    fun failedPaginationKeepsDataAndRetriesSamePage() = runTest {
+        repository.commits.addAll(
+            listOf(
+                page(commit("a")),
+                ApiResult.Failure(ApiError.Network),
+                page(commit("b"))
+            )
+        )
         val vm = start()
         vm.selectTab(RepoDetailTab.Commits)
         vm.loadMore()
@@ -118,8 +154,11 @@ class RepoDetailViewModelTest {
         assertEquals(listOf("a", "b"), vm.state.value.commits.items.map { it.sha })
     }
 
-    @Test fun directory404IsLocalAndCanNavigateBack() = runTest {
-        repository.directory = { path, _ -> if (path.isEmpty()) ApiResult.Success(emptyList()) else ApiResult.Failure(ApiError.NotFound) }
+    @Test
+    fun directory404IsLocalAndCanNavigateBack() = runTest {
+        repository.directory = { path, _ ->
+            if (path.isEmpty()) ApiResult.Success(emptyList()) else ApiResult.Failure(ApiError.NotFound)
+        }
         val vm = start()
         vm.openDirectory("missing")
         assertEquals(ApiError.NotFound, vm.state.value.files.error)
@@ -131,8 +170,16 @@ class RepoDetailViewModelTest {
         assertFalse(vm.navigateUp())
     }
 
-    @Test fun failedRefreshRetriesFirstPageInsteadOfAppendingNextPage() = runTest {
-        repository.commits.addAll(listOf(page(commit("old")), page(), ApiResult.Failure(ApiError.Network), page(commit("new"))))
+    @Test
+    fun failedRefreshRetriesFirstPageInsteadOfAppendingNextPage() = runTest {
+        repository.commits.addAll(
+            listOf(
+                page(commit("old")),
+                page(),
+                ApiResult.Failure(ApiError.Network),
+                page(commit("new"))
+            )
+        )
         val vm = start()
         vm.selectTab(RepoDetailTab.Commits)
         vm.loadMore()
@@ -144,10 +191,13 @@ class RepoDetailViewModelTest {
         assertEquals(listOf("new"), vm.state.value.commits.items.map { it.sha })
     }
 
-    @Test fun oldDirectoryResponseCannotOverwriteNewDirectory() = runTest {
+    @Test
+    fun oldDirectoryResponseCannotOverwriteNewDirectory() = runTest {
         var pending: Continuation<ApiResult<List<RepoEntry>>>? = null
         repository.directory = { path, _ ->
-            if (path == "slow") suspendCoroutine<ApiResult<List<RepoEntry>>> { pending = it } else ApiResult.Success(listOf(file("$path/ok.txt")))
+            if (path == "slow") suspendCoroutine<ApiResult<List<RepoEntry>>> {
+                pending = it
+            } else ApiResult.Success(listOf(file("$path/ok.txt")))
         }
         val vm = start()
         vm.openDirectory("slow")
@@ -157,7 +207,8 @@ class RepoDetailViewModelTest {
         assertEquals("fast/ok.txt", vm.state.value.files.entries.single().path)
     }
 
-    @Test fun tagSwitchResetsContentUsesShaAndPreservesBranchList() = runTest {
+    @Test
+    fun tagSwitchResetsContentUsesShaAndPreservesBranchList() = runTest {
         repository.commits += page(commit("a"))
         val vm = start()
         vm.selectTab(RepoDetailTab.Branches)
@@ -173,18 +224,37 @@ class RepoDetailViewModelTest {
         assertEquals(1, repository.branchCalls)
     }
 
-    @Test fun readmeUsesActualCaseAndPathAndKeepsFullContent() = runTest {
-        repository.directory = { _, _ -> ApiResult.Success(listOf(file("ReadMe.MD"), file("README.txt"))) }
-        contents.result = ApiResult.Success(RepoFileContent("ReadMe.MD", "ReadMe.MD", (1..50).joinToString("\n"), "base64", null, null))
+    @Test
+    fun readmeUsesActualCaseAndPathAndKeepsFullContent() = runTest {
+        repository.directory =
+            { _, _ -> ApiResult.Success(listOf(file("ReadMe.MD"), file("README.txt"))) }
+        val markdown = "项目文档\n\n" + "段落内容\n\n".repeat(12_000) +
+                (1..12).joinToString("\n\n") { "![图片 $it](docs/$it.png)" } + "\n\n文档结尾"
+        contents.result = ApiResult.Success(
+            RepoFileContent(
+                "ReadMe.MD",
+                "ReadMe.MD",
+                markdown,
+                "base64",
+                null,
+                null
+            )
+        )
         val vm = start()
+        val readme = vm.state.first { it.readme.loaded }.readme
         assertEquals("ReadMe.MD" to "develop", contents.calls.single())
-        assertEquals(50, vm.state.value.readme.preview!!.lines().size)
+        assertEquals(markdown, readme.preview)
+        assertTrue(contents.imageCalls.isEmpty())
+
+        vm.imagesFor(readme)!!.load("docs/11.png")
+        assertEquals(listOf("docs/11.png" to "develop"), contents.imageCalls)
         vm.openDirectory("src")
         vm.openDirectory("")
         assertEquals(1, contents.calls.size)
     }
 
-    @Test fun updatedTagWithSameNameUsesNewSha() = runTest {
+    @Test
+    fun updatedTagWithSameNameUsesNewSha() = runTest {
         val vm = start()
         vm.selectRef(RepoRef("v1", RepoRefKind.Tag, "old-sha"))
         vm.selectRef(RepoRef("v1", RepoRefKind.Tag, "new-sha"))
@@ -192,7 +262,8 @@ class RepoDetailViewModelTest {
         assertEquals("new-sha", vm.state.value.selectedRef?.requestRef)
     }
 
-    @Test fun readme404HidesPreviewButNetworkFailureCanRetryIndependently() = runTest {
+    @Test
+    fun readme404HidesPreviewButNetworkFailureCanRetryIndependently() = runTest {
         repository.directory = { _, _ -> ApiResult.Success(listOf(file("README.md"))) }
         contents.result = ApiResult.Failure(ApiError.Network)
         val vm = start()
@@ -205,22 +276,37 @@ class RepoDetailViewModelTest {
         assertNull(vm.state.value.readme.path)
     }
 
-    @Test fun oldReadmeCannotAppearAfterSwitchingRef() = runTest {
+    @Test
+    fun oldReadmeCannotAppearAfterSwitchingRef() = runTest {
         var pending: Continuation<ApiResult<RepoFileContent>>? = null
-        repository.directory = { _, ref -> ApiResult.Success(if (ref == "develop") listOf(file("README.md")) else emptyList()) }
+        repository.directory =
+            { _, ref -> ApiResult.Success(if (ref == "develop") listOf(file("README.md")) else emptyList()) }
         contents.loader = { suspendCoroutine { pending = it } }
         val vm = start()
         vm.selectRef(RepoRef("next", RepoRefKind.Branch))
-        pending!!.resume(ApiResult.Success(RepoFileContent("README.md", "README.md", "old readme", null, null, null)))
+        pending!!.resume(
+            ApiResult.Success(
+                RepoFileContent(
+                    "README.md",
+                    "README.md",
+                    "old readme",
+                    null,
+                    null,
+                    null
+                )
+            )
+        )
         assertNull(vm.state.value.readme.preview)
         assertEquals("next", vm.state.value.selectedRef?.name)
     }
 
     private class FakeRepository : RepoDetailRepository {
         var detailCalls = 0
-        var detailFactory: (String, String) -> RepoDetail = { owner, repo -> RepoDetail(owner, repo, repo, defaultBranch = "develop") }
+        var detailFactory: (String, String) -> RepoDetail =
+            { owner, repo -> RepoDetail(owner, repo, repo, defaultBranch = "develop") }
         val directories = mutableListOf<Pair<String, String>>()
-        var directory: suspend (String, String) -> ApiResult<List<RepoEntry>> = { _, _ -> ApiResult.Success(emptyList()) }
+        var directory: suspend (String, String) -> ApiResult<List<RepoEntry>> =
+            { _, _ -> ApiResult.Success(emptyList()) }
         val commits = ArrayDeque<ApiResult<PagedItems<CommitSummary>>>()
         val commitPages = mutableListOf<Int>()
         var branchCalls = 0
@@ -229,19 +315,44 @@ class RepoDetailViewModelTest {
             detailCalls++
             return ApiResult.Success(detailFactory(owner, repo))
         }
-        override suspend fun getDirectory(owner: String, repo: String, path: String, ref: String): ApiResult<List<RepoEntry>> {
+
+        override suspend fun getDirectory(
+            owner: String,
+            repo: String,
+            path: String,
+            ref: String
+        ): ApiResult<List<RepoEntry>> {
             directories += path to ref
             return directory(path, ref)
         }
-        override suspend fun listCommits(owner: String, repo: String, ref: String, page: Int, perPage: Int): ApiResult<PagedItems<CommitSummary>> {
+
+        override suspend fun listCommits(
+            owner: String,
+            repo: String,
+            ref: String,
+            page: Int,
+            perPage: Int
+        ): ApiResult<PagedItems<CommitSummary>> {
             commitPages += page
             return if (commits.isEmpty()) ApiResult.Success(PagedItems(emptyList())) else commits.removeFirst()
         }
-        override suspend fun listBranches(owner: String, repo: String, page: Int, perPage: Int): ApiResult<PagedItems<RepoRef>> {
+
+        override suspend fun listBranches(
+            owner: String,
+            repo: String,
+            page: Int,
+            perPage: Int
+        ): ApiResult<PagedItems<RepoRef>> {
             branchCalls++
             return ApiResult.Success(PagedItems(listOf(RepoRef("develop", RepoRefKind.Branch))))
         }
-        override suspend fun listTags(owner: String, repo: String, page: Int, perPage: Int): ApiResult<PagedItems<RepoRef>> {
+
+        override suspend fun listTags(
+            owner: String,
+            repo: String,
+            page: Int,
+            perPage: Int
+        ): ApiResult<PagedItems<RepoRef>> {
             tagCalls++
             return ApiResult.Success(PagedItems(emptyList()))
         }
@@ -249,24 +360,40 @@ class RepoDetailViewModelTest {
 
     private class FakeProfiles : UserProfileRepository {
         val calls = mutableListOf<String>()
-        var loader: suspend (String) -> ApiResult<UserProfile> = { ApiResult.Failure(ApiError.NotFound) }
+        var loader: suspend (String) -> ApiResult<UserProfile> =
+            { ApiResult.Failure(ApiError.NotFound) }
+
         override suspend fun get(login: String): ApiResult<UserProfile> {
             calls += login
             return loader(login)
         }
+
         override suspend fun counts(login: String) = ProfileCounts()
     }
 
     private class FakeContents : RepoContentRepository {
         val calls = mutableListOf<Pair<String, String>>()
+        val imageCalls = mutableListOf<Pair<String, String>>()
         var result: ApiResult<RepoFileContent> = ApiResult.Failure(ApiError.NotFound)
         var loader: (suspend () -> ApiResult<RepoFileContent>)? = null
-        override suspend fun getFile(owner: String, repo: String, path: String, ref: String): ApiResult<RepoFileContent> {
+        override suspend fun getFile(
+            owner: String,
+            repo: String,
+            path: String,
+            ref: String
+        ): ApiResult<RepoFileContent> {
             calls += path to ref
             return loader?.invoke() ?: result
         }
 
-        override suspend fun getFileBytes(owner: String, repo: String, path: String, ref: String): ApiResult<ByteArray> =
-            ApiResult.Success(byteArrayOf(1, 2, 3))
+        override suspend fun getFileBytes(
+            owner: String,
+            repo: String,
+            path: String,
+            ref: String
+        ): ApiResult<ByteArray> {
+            imageCalls += path to ref
+            return ApiResult.Failure(ApiError.NotFound)
+        }
     }
 }

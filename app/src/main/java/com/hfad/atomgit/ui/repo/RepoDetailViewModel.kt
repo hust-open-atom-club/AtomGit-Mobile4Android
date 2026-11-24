@@ -15,14 +15,13 @@ import com.hfad.atomgit.data.repository.RepoContentRepository
 import com.hfad.atomgit.data.repository.RepoDetailRepository
 import com.hfad.atomgit.data.repository.UserProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 enum class RepoDetailTab(val label: String) { Files("文件"), Commits("提交"), Branches("分支"), Tags("标签") }
@@ -50,7 +49,6 @@ data class RepoDirectoryState(
 data class RepoReadmeState(
     val path: String? = null,
     val preview: String? = null,
-    val images: Map<String, ByteArray> = emptyMap(),
     val loaded: Boolean = false,
     val isLoading: Boolean = false,
     val error: ApiError? = null,
@@ -90,6 +88,7 @@ class RepoDetailViewModel @Inject constructor(
     private var ownerJob: Job? = null
     private var directoryJob: Job? = null
     private var readmeJob: Job? = null
+    private var readmeImageLoader: ReadmeImageLoader? = null
     private val pageJobs = mutableMapOf<RepoDetailTab, Job>()
     private val directories = linkedMapOf<String, RepoDirectoryState>()
 
@@ -101,6 +100,7 @@ class RepoDetailViewModel @Inject constructor(
         ownerJob?.cancel()
         directoryJob?.cancel()
         readmeJob?.cancel()
+        clearReadmeImages()
         pageJobs.values.forEach { it.cancel() }
         directories.clear()
         _state.value = RepoDetailUiState(owner = owner, repo = repo)
@@ -180,6 +180,7 @@ class RepoDetailViewModel @Inject constructor(
         refEpoch++
         directoryJob?.cancel()
         readmeJob?.cancel()
+        clearReadmeImages()
         pageJobs[RepoDetailTab.Commits]?.cancel()
         directories.clear()
         _state.update {
@@ -239,6 +240,7 @@ class RepoDetailViewModel @Inject constructor(
         if (candidate == null) {
             readmeRequest++
             readmeJob?.cancel()
+            clearReadmeImages()
             _state.update { it.copy(readme = RepoReadmeState(loaded = true)) }
         } else if (force || !_state.value.readme.loaded && !_state.value.readme.isLoading) {
             loadReadme(candidate.path)
@@ -247,73 +249,53 @@ class RepoDetailViewModel @Inject constructor(
 
     fun retryReadme() { _state.value.readme.path?.let(::loadReadme) }
 
+    internal fun imagesFor(readme: RepoReadmeState): ReadmeImageLoader? =
+        if (_state.value.readme === readme) readmeImageLoader else null
+
+    private fun clearReadmeImages() {
+        readmeImageLoader?.close()
+        readmeImageLoader = null
+    }
+
     private fun loadReadme(path: String) {
         readmeJob?.cancel()
         val snapshot = _state.value
         val ref = snapshot.selectedRef ?: return
+        clearReadmeImages()
         val epoch = refEpoch
         val repoToken = repoEpoch
         val request = ++readmeRequest
         _state.update { it.copy(readme = RepoReadmeState(path = path, isLoading = true)) }
         readmeJob = viewModelScope.launch {
             val result = contentRepository.getFile(snapshot.owner, snapshot.repo, path, ref.requestRef)
-            if (epoch != refEpoch || repoToken != repoEpoch || request != readmeRequest) return@launch
             val next = when (result) {
                 is ApiResult.Success -> {
-                    val prepared = prepareReadme(
-                        owner = snapshot.owner,
-                        repo = snapshot.repo,
-                        ref = ref.requestRef,
-                        path = path,
-                        content = result.value.content,
-                    )
-                    RepoReadmeState(
-                        path = path,
-                        preview = prepared.markdown,
-                        images = prepared.images,
-                        loaded = true,
-                    )
+                    val markdown = withContext(Dispatchers.Default) {
+                        rewriteReadme(
+                            markdown = result.value.content,
+                            baseDir = path.substringBeforeLast('/', ""),
+                            owner = snapshot.owner,
+                            repo = snapshot.repo,
+                            ref = ref.requestRef,
+                            filePath = path,
+                        )
+                    }
+                    RepoReadmeState(path = path, preview = markdown, loaded = true)
                 }
                 is ApiResult.Failure -> if (result.error == ApiError.NotFound) RepoReadmeState(loaded = true)
                     else RepoReadmeState(path = path, loaded = true, error = result.error)
             }
             if (epoch != refEpoch || repoToken != repoEpoch || request != readmeRequest) return@launch
+            if (next.preview != null) {
+                readmeImageLoader = ReadmeImageLoader(viewModelScope) { imagePath ->
+                    val image = withContext(Dispatchers.IO) {
+                        contentRepository.getFileBytes(snapshot.owner, snapshot.repo, imagePath, ref.requestRef)
+                    }
+                    (image as? ApiResult.Success)?.value?.takeIf { it.isNotEmpty() }
+                }
+            }
             _state.update { it.copy(readme = next) }
         }
-    }
-
-    /// 图片与相对链接要换成仓库地址；图片直接取字节，避免走 raw 域名
-    private suspend fun prepareReadme(
-        owner: String,
-        repo: String,
-        ref: String,
-        path: String,
-        content: String,
-    ): PreparedReadme {
-        val markdown = content.take(MaxReadmeLength)
-        val baseDir = path.substringBeforeLast('/', "")
-        val imagePaths = collectReadmeImages(markdown, baseDir).take(MaxReadmeImages)
-        val loaded = coroutineScope {
-            imagePaths.map { imagePath ->
-                async {
-                    val bytes = (contentRepository.getFileBytes(owner, repo, imagePath, ref) as? ApiResult.Success)?.value
-                    if (bytes == null || bytes.isEmpty() || bytes.size > MaxReadmeImageBytes) null
-                    else imagePath to bytes
-                }
-            }.awaitAll()
-        }.filterNotNull()
-        val links = loaded.associate { (imagePath, _) -> imagePath to blobLink(imagePath) }
-        val images = loaded.associate { (imagePath, bytes) -> blobLink(imagePath) to bytes }
-        return PreparedReadme(
-            markdown = rewriteReadme(markdown, baseDir, owner, repo, ref, path, links),
-            images = images,
-        )
-    }
-
-    private companion object {
-        const val MaxReadmeLength = 64_000
-        const val MaxReadmeImages = 10
-        const val MaxReadmeImageBytes = 2 * 1024 * 1024
     }
 
     fun refresh() {

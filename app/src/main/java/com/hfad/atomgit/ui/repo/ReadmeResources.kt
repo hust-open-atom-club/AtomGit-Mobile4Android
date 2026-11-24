@@ -1,14 +1,12 @@
 package com.hfad.atomgit.ui.repo
 
-private val ImagePattern = Regex("""!\[[^\]]*]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\)""")
-private val HtmlImagePattern = Regex("""<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
 private val LinkPattern = Regex("""(?<!!)\[[^\]]*]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\)""")
+private val AbsoluteScheme = Regex("^[a-zA-Z][a-zA-Z0-9+.-]*:")
 
 /** 把仓库内的相对路径规整成仓库根路径，外部地址与锚点返回 null */
 internal fun resolveReadmePath(baseDir: String, target: String): String? {
     if (target.isBlank()) return null
-    if (target.startsWith("http://") || target.startsWith("https://")) return null
-    if (target.startsWith("//") || target.startsWith("mailto:")) return null
+    if (target.startsWith("//") || AbsoluteScheme.containsMatchIn(target)) return null
     if (target.startsWith("#")) return null
     val path = target.substringBefore('#').substringBefore('?')
     if (path.isBlank()) return null
@@ -24,17 +22,9 @@ internal fun resolveReadmePath(baseDir: String, target: String): String? {
     return segments.joinToString("/").ifBlank { null }
 }
 
-/** 相对图片路径，按出现顺序去重 */
-internal fun collectReadmeImages(markdown: String, baseDir: String): List<String> {
-    val targets = buildList {
-        ImagePattern.findAll(markdown).forEach { add(it.groupValues[1]) }
-        HtmlImagePattern.findAll(markdown).forEach { add(it.groupValues[1]) }
-    }
-    return targets.mapNotNull { resolveReadmePath(baseDir, it) }.distinct()
-}
-
 /**
- * 重写 README：图片换成 raw 地址，相对文件链接换成仓库网页地址，锚点补全到当前文件
+ * 相对文件链接换成仓库网页地址，锚点补全到当前文件。
+ * 图片在对应的 Markdown 块渲染时才解析路径
  */
 internal fun rewriteReadme(
     markdown: String,
@@ -43,25 +33,9 @@ internal fun rewriteReadme(
     repo: String,
     ref: String,
     filePath: String,
-    imageUrls: Map<String, String>,
 ): String {
     val webBase = "https://atomgit.com/$owner/$repo/blob/$ref"
-    fun rawUrl(target: String): String? {
-        val path = resolveReadmePath(baseDir, target) ?: return null
-        return imageUrls[path]
-    }
-
-    var result = markdown.replace(ImagePattern) { match ->
-        val target = match.groupValues[1]
-        val url = rawUrl(target) ?: target
-        match.value.replace(target, url)
-    }
-    result = result.replace(HtmlImagePattern) { match ->
-        val target = match.groupValues[1]
-        val url = rawUrl(target) ?: target
-        match.value.replace(target, url)
-    }
-    result = result.replace(LinkPattern) { match ->
+    return markdown.replace(LinkPattern) { match ->
         val target = match.groupValues[1]
         val resolved = when {
             target.startsWith("#") -> "$webBase/$filePath$target"
@@ -69,13 +43,4 @@ internal fun rewriteReadme(
         } ?: return@replace match.value
         match.value.replace(target, resolved)
     }
-    return result
 }
-
-/** README 里图片先按路径存字节，渲染时用此伪链接取 */
-internal fun blobLink(path: String): String = "atomgit-image:$path"
-
-internal data class PreparedReadme(
-    val markdown: String,
-    val images: Map<String, ByteArray>,
-)

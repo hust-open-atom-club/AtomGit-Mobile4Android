@@ -19,17 +19,7 @@ class ReadmeResourcesTest {
         assertNull(resolveReadmePath("", "mailto:a@b.c"))
     }
 
-    @Test fun collectsRelativeImagesOnce() {
-        val markdown = """
-            ![a](./docs/a.png)
-            ![b](docs/a.png)
-            <img src="docs/b.png" width="120">
-            ![c](https://example.com/c.png)
-        """.trimIndent()
-        assertEquals(listOf("docs/a.png", "docs/b.png"), collectReadmeImages(markdown, ""))
-    }
-
-    @Test fun rewritesImagesAndLinks() {
+    @Test fun rewritesFileLinksAndPreservesImageSourceForLazyLoading() {
         val markdown = "[指南](CONTRIBUTING.md) ![a](docs/a.png) [章节](#安装)"
         val result = rewriteReadme(
             markdown = markdown,
@@ -38,26 +28,13 @@ class ReadmeResourcesTest {
             repo = "r",
             ref = "main",
             filePath = "README.md",
-            imageUrls = mapOf("docs/a.png" to "https://raw.atomgit.com/o/r/blobs/sha/docs/a.png"),
         )
         assertEquals(
             "[指南](https://atomgit.com/o/r/blob/main/CONTRIBUTING.md) " +
-                "![a](https://raw.atomgit.com/o/r/blobs/sha/docs/a.png) " +
+                "![a](docs/a.png) " +
                 "[章节](https://atomgit.com/o/r/blob/main/README.md#安装)",
             result,
         )
     }
 
-    @Test fun keepsUnresolvedImageReference() {
-        val result = rewriteReadme(
-            markdown = "![a](docs/a.png)",
-            baseDir = "",
-            owner = "o",
-            repo = "r",
-            ref = "main",
-            filePath = "README.md",
-            imageUrls = emptyMap(),
-        )
-        assertEquals("![a](docs/a.png)", result)
-    }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -64,6 +65,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.R
@@ -103,6 +105,7 @@ fun RepoDetailScreen(
         onLoadMore = viewModel::loadMore,
         onOpenFile = { path -> state.selectedRef?.let { onOpenFile(path, it.requestRef) } },
         onOpenLink = onOpenLink,
+        readmeImages = viewModel.imagesFor(state.readme),
         modifier = modifier,
     )
 }
@@ -122,6 +125,7 @@ internal fun RepoDetailContent(
     onOpenFile: (String) -> Unit,
     onOpenLink: (String) -> Unit,
     modifier: Modifier = Modifier,
+    readmeImages: ReadmeImageLoader? = null,
 ) {
     val uriHandler = LocalUriHandler.current
     var menuExpanded by remember { mutableStateOf(false) }
@@ -191,7 +195,8 @@ internal fun RepoDetailContent(
                     val showBackToTop by remember(listState) {
                         derivedStateOf { listState.firstVisibleItemIndex > 3 }
                     }
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                    BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        val readmeWidth = (maxWidth - 32.dp).coerceAtLeast(0.dp)
                         LazyColumn(
                             state = listState,
                             modifier = Modifier.fillMaxSize(),
@@ -224,6 +229,8 @@ internal fun RepoDetailContent(
                                 RepoDetailTab.Files -> filesItems(
                                     state = state,
                                     markdown = markdown,
+                                    readmeImages = readmeImages,
+                                    readmeWidth = readmeWidth,
                                     onDirectory = onDirectory,
                                     onFile = onOpenFile,
                                     onRetry = onRetry,
@@ -301,6 +308,8 @@ private suspend fun LazyListState.scrollToTop() = scroll {
 private fun LazyListScope.filesItems(
     state: RepoDetailUiState,
     markdown: MarkdownState?,
+    readmeImages: ReadmeImageLoader?,
+    readmeWidth: Dp,
     onDirectory: (String) -> Unit,
     onFile: (String) -> Unit,
     onRetry: () -> Unit,
@@ -377,7 +386,10 @@ private fun LazyListScope.filesItems(
                 if (markdown is MarkdownState.Success) {
                     items(markdown.node.children, key = { "readme-block:${it.startOffset}" }) { node ->
                         ReadmeMarkdownBlock(
-                            markdown = markdown, node = node, images = readme.images,
+                            markdown = markdown, node = node,
+                            imageLoader = readmeImages,
+                            imageBaseDir = readme.path.orEmpty().substringBeforeLast('/', ""),
+                            contentWidth = readmeWidth,
                             onImageClick = onFile, onLink = onOpenLink,
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         )

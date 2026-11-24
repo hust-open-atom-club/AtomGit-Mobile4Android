@@ -1,7 +1,6 @@
 package com.hfad.atomgit.ui.repo
 
 import android.view.ViewGroup
-import android.graphics.BitmapFactory
 import android.graphics.Color.BLACK
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -28,12 +28,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -70,20 +73,20 @@ import com.mikepenz.markdown.model.PlaceholderConfig
 import com.mikepenz.markdown.model.State
 import com.mikepenz.markdown.model.markdownAnimations
 import org.intellij.markdown.ast.ASTNode
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.core.graphics.drawable.toDrawable
 
 /**
  * README 预览，按 Markdown 渲染。
- * 仓库内图片用预取的字节渲染（避免 raw 域名的鉴权问题），外链图片仍交给 Coil。
+ * 仓库内图片按需通过内容接口加载，外链图片交给 Coil。
  * 任意图片点击后打开全屏预览。
  */
 @Composable
 internal fun ReadmeMarkdownBlock(
     markdown: State.Success,
     node: ASTNode,
-    images: Map<String, ByteArray> = emptyMap(),
+    imageLoader: ReadmeImageLoader? = null,
+    imageBaseDir: String = "",
+    contentWidth: Dp = Dp.Unspecified,
     onImageClick: (String) -> Unit = {},
     onLink: (String) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -98,8 +101,10 @@ internal fun ReadmeMarkdownBlock(
     val highlightsBuilder = remember(dark) {
         Highlights.Builder().theme(SyntaxThemes.atom(darkMode = dark))
     }
-    val transformer = remember(images) {
-        ReadmeImageTransformer(images) { target -> preview = target }
+    val transformer = remember(imageLoader, imageBaseDir, contentWidth) {
+        ReadmeImageTransformer(imageLoader, imageBaseDir, contentWidth) { target ->
+            preview = target
+        }
     }
     val base = MaterialTheme.typography
     val linkStyle = SpanStyle(
@@ -168,76 +173,72 @@ internal fun ReadmeMarkdownBlock(
     }
 }
 
-private const val IMAGE_LINK_PREFIX = "atomgit-image:"
-
 /** 预览来源：仓库内图片带字节与路径，外链只有地址 */
 internal sealed interface ImagePreviewTarget {
-    data class Local(val path: String, val bytes: ByteArray) : ImagePreviewTarget {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Local
-
-            if (path != other.path) return false
-            if (!bytes.contentEquals(other.bytes)) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = path.hashCode()
-            result = 31 * result + bytes.contentHashCode()
-            return result
-        }
+    class Local(val path: String, val bytes: ByteArray, val thumbnail: ImageBitmap) :
+        ImagePreviewTarget {
+        val memorySize: Long get() = bytes.size + thumbnail.width * thumbnail.height * 4L
     }
 
     data class Remote(val url: String) : ImagePreviewTarget
 }
 
 private class ReadmeImageTransformer(
-    private val images: Map<String, ByteArray>,
+    private val loader: ReadmeImageLoader?,
+    private val baseDir: String,
+    private val contentWidth: Dp,
     private val onPreview: (ImagePreviewTarget) -> Unit,
 ) : ImageTransformer {
 
     @Composable
     override fun transform(link: String): ImageData? {
-        val bytes = images[link] ?: return external(link)
-        val bitmap by produceState<ImageBitmap?>(initialValue = null, bytes) {
-            value = withContext(Dispatchers.Default) {
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+        val path = resolveReadmePath(baseDir, link) ?: return external(link)
+        val imageLoader = loader ?: return null
+        val image = key(imageLoader, path) {
+            val loaded by produceState(initialValue = imageLoader.cached(path)) {
+                if (value == null) value = imageLoader.load(path)
             }
-        }
-        val image = bitmap ?: return null
-        val path = link.removePrefix(IMAGE_LINK_PREFIX)
+            loaded
+        } ?: return null
         return ImageData(
-            painter = remember(image) { BitmapPainter(image) },
-            modifier = Modifier.clickable { onPreview(ImagePreviewTarget.Local(path, bytes)) },
+            painter = remember(image) { BitmapPainter(image.thumbnail) },
+            modifier = Modifier.clickable { onPreview(image) },
             contentScale = ContentScale.FillWidth,
         )
     }
 
     @Composable
     private fun external(link: String): ImageData? {
-        val base = Coil3ImageTransformerImpl.transform(link) ?: return null
-        return base.copy(modifier = Modifier.clickable { onPreview(ImagePreviewTarget.Remote(link)) })
+        val url = if (link.startsWith("//")) "https:$link" else link
+        val base = Coil3ImageTransformerImpl.transform(url) ?: return null
+        return base.copy(modifier = Modifier.clickable { onPreview(ImagePreviewTarget.Remote(url)) })
     }
+
+    @Composable
+    override fun intrinsicSize(painter: Painter): Size =
+        Coil3ImageTransformerImpl.intrinsicSize(painter)
 
     override fun placeholderConfig(
         link: String,
         density: Density,
-        containerSize: androidx.compose.ui.geometry.Size,
+        containerSize: Size,
         imageWidth: ImageWidth,
-        imageSize: androidx.compose.ui.geometry.Size,
-        imageSizeChanged: ((link: String, androidx.compose.ui.geometry.Size) -> Unit)?,
-    ): PlaceholderConfig = Coil3ImageTransformerImpl.placeholderConfig(
-        link = link,
-        density = density,
-        containerSize = containerSize,
-        imageWidth = imageWidth,
-        imageSize = imageSize,
-        imageSizeChanged = imageSizeChanged,
-    )
+        imageSize: Size,
+        imageSizeChanged: ((link: String, Size) -> Unit)?,
+    ): PlaceholderConfig {
+        val cached = if (imageSize.isUnspecified) {
+            resolveReadmePath(baseDir, link)?.let { loader?.cached(it)?.thumbnail }
+        } else null
+        val size = cached?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: imageSize
+        val container =
+            if (!size.isUnspecified && containerSize.isUnspecified && contentWidth != Dp.Unspecified) {
+                val width = with(density) { contentWidth.toPx() }
+                Size(width, width)
+            } else containerSize
+        return Coil3ImageTransformerImpl.placeholderConfig(
+            link, density, container, imageWidth, size, imageSizeChanged,
+        )
+    }
 }
 
 @Composable
@@ -248,7 +249,10 @@ private fun ImagePreviewDialog(
 ) {
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        ),
     ) {
         val view = LocalView.current
         val window = (view.parent as? DialogWindowProvider)?.window
@@ -295,23 +299,17 @@ private fun ImagePreviewDialog(
                 )
             when (target) {
                 is ImagePreviewTarget.Local -> {
-                    val bitmap by produceState<ImageBitmap?>(initialValue = null, target.bytes) {
-                        value = withContext(Dispatchers.Default) {
-                            BitmapFactory.decodeByteArray(target.bytes, 0, target.bytes.size)?.asImageBitmap()
-                        }
+                    val bitmap by produceState(initialValue = target.thumbnail, target) {
+                        decodeReadmeImage(target.bytes, maxSide = 2560)?.let { value = it }
                     }
-                    val image = bitmap
-                    if (image == null) {
-                        Text("图片解码失败", color = Color.White)
-                    } else {
-                        Image(
-                            bitmap = image,
-                            contentDescription = null,
-                            modifier = transform,
-                            contentScale = ContentScale.Fit,
-                        )
-                    }
+                    Image(
+                        bitmap = bitmap,
+                        contentDescription = null,
+                        modifier = transform,
+                        contentScale = ContentScale.Fit,
+                    )
                 }
+
                 is ImagePreviewTarget.Remote -> AsyncImage(
                     model = target.url,
                     contentDescription = null,
