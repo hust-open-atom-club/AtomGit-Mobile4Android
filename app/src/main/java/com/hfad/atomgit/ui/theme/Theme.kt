@@ -36,6 +36,11 @@ private val LightColorScheme = lightColorScheme(
     inversePrimary = AccentBlueDark,
     outline = Hairline,
     outlineVariant = Indicator,
+    surfaceContainerLowest = Paper,
+    surfaceContainerLow = SurfaceContainerLowLight,
+    surfaceContainer = PaperDim,
+    surfaceContainerHigh = SurfaceContainerHighLight,
+    surfaceContainerHighest = Indicator,
     error = ErrorRed,
     onError = OnError,
     scrim = Color(0x99000000),
@@ -66,6 +71,11 @@ private val DarkColorScheme = darkColorScheme(
     inversePrimary = AccentBlue,
     outline = HairlineDark,
     outlineVariant = IndicatorDark,
+    surfaceContainerLowest = PaperDark,
+    surfaceContainerLow = SurfaceContainerLowDark,
+    surfaceContainer = PaperDimDark,
+    surfaceContainerHigh = SurfaceContainerHighDark,
+    surfaceContainerHighest = HairlineDark,
     error = ErrorRed,
     onError = OnError,
     scrim = Color(0x99000000),
@@ -88,6 +98,7 @@ fun AtomGitTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
         typography = Typography,
+        shapes = AtomShapes,
         content = content,
     )
 }

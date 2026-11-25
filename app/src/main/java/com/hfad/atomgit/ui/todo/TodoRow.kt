@@ -1,17 +1,16 @@
 package com.hfad.atomgit.ui.todo
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +24,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hfad.atomgit.data.model.TodoItem
 import com.hfad.atomgit.data.model.TodoKind
+import com.hfad.atomgit.ui.components.InboxLayout
+import com.hfad.atomgit.ui.components.M3RaisedCard
 import com.hfad.atomgit.ui.profile.Pressable
 import com.hfad.atomgit.ui.theme.AccentBlue
 import com.hfad.atomgit.ui.theme.AccentBlueBright
@@ -67,29 +68,27 @@ fun TodoRow(
             .testTag("todo-row"),
         showRipple = false,
     ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = colors.surface,
-            border = BorderStroke(1.dp, colors.outline),
-            tonalElevation = 0.dp,
-            shadowElevation = 0.dp,
-        ) {
+        M3RaisedCard(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .heightIn(min = InboxLayout.rowMinHeight)
+                    .padding(
+                        horizontal = InboxLayout.rowHorizontal,
+                        vertical = InboxLayout.rowVertical,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 KindBadge(kind = item.kind)
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.onSurface,
                         maxLines = 2,
@@ -161,7 +160,7 @@ private fun KindBadge(kind: TodoKind) {
             .widthIn(min = 40.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(container)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 6.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

@@ -1,5 +1,6 @@
 package com.hfad.atomgit.ui.follow
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +53,7 @@ fun FollowListScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .testTag("screen-follow"),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {

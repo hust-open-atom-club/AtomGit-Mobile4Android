@@ -11,6 +11,18 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 
 /**
+ * 主导航动画意图。底部 Tab 左右切换用平移翻页；栈内 push 仍用右侧滑入。
+ */
+enum class NavMotion {
+    /** 点到更靠右的 Tab：新页从右滑入。 */
+    TabToRight,
+    /** 点到更靠左的 Tab：新页从左滑入。 */
+    TabToLeft,
+    /** 当前栈压入详情。 */
+    Push,
+}
+
+/**
  * 四个顶层入口的返回栈与当前选中入口。
  *
  * 每个入口单独持有一个 [NavBackStack]，切换 Tab 只换当前渲染的对应栈。
@@ -19,6 +31,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 class TabNavState internal constructor(
     private val selectedTabState: MutableState<TopLevelTab>,
     private val stacks: Map<TopLevelTab, NavBackStack<NavKey>>,
+    private val motionState: MutableState<NavMotion> = mutableStateOf(NavMotion.Push),
 ) {
 
     val selectedTab: TopLevelTab
@@ -27,11 +40,23 @@ class TabNavState internal constructor(
     val currentStack: NavBackStack<NavKey>
         get() = stacks.getValue(selectedTabState.value)
 
+    /** 最近一次导航要用的过渡方向，供 [androidx.navigation3.ui.NavDisplay] 读取。 */
+    val motion: NavMotion
+        get() = motionState.value
+
     fun select(tab: TopLevelTab) {
+        val current = selectedTabState.value
+        if (tab == current) return
+        motionState.value = if (tab.ordinal > current.ordinal) {
+            NavMotion.TabToRight
+        } else {
+            NavMotion.TabToLeft
+        }
         selectedTabState.value = tab
     }
 
     fun push(route: Route) {
+        motionState.value = NavMotion.Push
         currentStack.add(route)
     }
 

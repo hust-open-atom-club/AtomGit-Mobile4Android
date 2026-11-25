@@ -1,5 +1,11 @@
 package com.hfad.atomgit.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -19,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -42,6 +49,8 @@ import com.hfad.atomgit.ui.settings.SettingsScreen
 import com.hfad.atomgit.ui.todo.TodoScreen
 import com.hfad.atomgit.ui.user.UserProfileScreen
 
+private const val NavMotionMillis = 250
+
 /**
  * 单 Activity 的主导航。
  */
@@ -57,7 +66,7 @@ fun AtomGitNavHost(
         modifier = modifier,
         bottomBar = {
             val current = navState.currentStack.lastOrNull()
-            if (current !is RepoDetailRoute && current !is CodeViewerRoute) {
+            if (current !is RepoDetailRoute && current !is CodeViewerRoute && current !is IssueDetailRoute) {
                 AtomGitBottomBar(
                     selected = navState.selectedTab,
                     onSelect = navState::select,
@@ -69,8 +78,36 @@ fun AtomGitNavHost(
             backStack = navState.currentStack,// 堆栈列表
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .clipToBounds(),
             onBack = { if (!navState.pop()) onExit() },
+            // Tab 左右切换用双向平移翻页；栈内前进仍从右侧滑入，避免和返回叠层拖影。
+            transitionSpec = {
+                when (navState.motion) {
+                    NavMotion.TabToRight -> {
+                        // 点到右边的 Tab：新页从右进入，旧页往左移出
+                        slideInHorizontally(tween(NavMotionMillis)) { fullWidth -> fullWidth } togetherWith
+                            slideOutHorizontally(tween(NavMotionMillis)) { fullWidth -> -fullWidth }
+                    }
+                    NavMotion.TabToLeft -> {
+                        // 点到左边的 Tab：新页从左进入，旧页往右移出
+                        slideInHorizontally(tween(NavMotionMillis)) { fullWidth -> -fullWidth } togetherWith
+                            slideOutHorizontally(tween(NavMotionMillis)) { fullWidth -> fullWidth }
+                    }
+                    NavMotion.Push -> {
+                        slideInHorizontally(tween(NavMotionMillis)) { fullWidth -> fullWidth } togetherWith
+                            ExitTransition.None
+                    }
+                }
+            },
+            popTransitionSpec = {
+                EnterTransition.None togetherWith
+                    slideOutHorizontally(tween(NavMotionMillis)) { fullWidth -> fullWidth }
+            },
+            predictivePopTransitionSpec = { _ ->
+                EnterTransition.None togetherWith
+                    slideOutHorizontally(tween(NavMotionMillis)) { fullWidth -> fullWidth }
+            },
             entryDecorators = listOf(
                 // 为每个 NavEntry 提供独立的 rememberSaveable 状态保存作用域
                 rememberSaveableStateHolderNavEntryDecorator(),
@@ -100,7 +137,15 @@ fun AtomGitNavHost(
                     entry<NotificationRoute> {
                         NotificationScreen(
                             listState = listStates.getValue(TopLevelTab.Notification),
-                            onOpenIssue = { owner, repo, number -> navState.push(IssueDetailRoute(owner, repo, number)) },
+                            onOpenIssue = { owner, repo, number ->
+                                navState.push(IssueDetailRoute(owner, repo, number))
+                            },
+                            onOpenPull = { owner, repo, number ->
+                                navState.push(PullDetailRoute(owner, repo, number))
+                            },
+                            onOpenRepo = { owner, repo ->
+                                navState.push(RepoDetailRoute(owner, repo))
+                            },
                         )
                     }
                     entry<ProfileRoute> {
