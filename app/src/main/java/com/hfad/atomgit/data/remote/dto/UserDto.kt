@@ -28,7 +28,12 @@ data class UserDto(
 
 @Serializable
 data class ActorDto(
-    val id: Long? = null,
+    /**
+     * 同名接口两种形态都会出现：通知里是数字，Issue 详情里是 `6a7760a0…` 这种字符串。
+     * 不用 Long，否则详情整页会变成解析失败。
+     */
+    @Serializable(with = JsonAsStringSerializer::class)
+    val id: String? = null,
     val login: String? = null,
     val username: String? = null,
     val name: String? = null,

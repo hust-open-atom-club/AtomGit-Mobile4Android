@@ -23,6 +23,14 @@ data class IssueDto(
     val user: ActorDto? = null,
     val assignees: List<ActorDto>? = null,
     val repository: RepoDto? = null,
+    val labels: List<IssueLabelDto> = emptyList(),
+)
+
+@Serializable
+data class IssueLabelDto(
+    val name: String? = null,
+    val title: String? = null,
+    val color: String? = null,
 )
 
 @Serializable

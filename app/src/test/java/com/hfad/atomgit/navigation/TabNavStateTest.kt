@@ -60,6 +60,49 @@ class TabNavStateTest {
     }
 
     @Test
+    fun selectRightTabSetsTabToRightMotion() {
+        val state = newState(TopLevelTab.Feed)
+
+        state.select(TopLevelTab.Notification)
+
+        assertEquals(TopLevelTab.Notification, state.selectedTab)
+        assertEquals(NavMotion.TabToRight, state.motion)
+    }
+
+    @Test
+    fun selectLeftTabSetsTabToLeftMotion() {
+        val state = newState(TopLevelTab.Profile)
+
+        state.select(TopLevelTab.Todo)
+
+        assertEquals(TopLevelTab.Todo, state.selectedTab)
+        assertEquals(NavMotion.TabToLeft, state.motion)
+    }
+
+    @Test
+    fun selectSameTabDoesNotChangeMotion() {
+        val state = newState(TopLevelTab.Todo)
+        state.select(TopLevelTab.Profile)
+        assertEquals(NavMotion.TabToRight, state.motion)
+
+        state.select(TopLevelTab.Profile)
+
+        assertEquals(TopLevelTab.Profile, state.selectedTab)
+        assertEquals(NavMotion.TabToRight, state.motion)
+    }
+
+    @Test
+    fun pushSetsPushMotion() {
+        val state = newState()
+        state.select(TopLevelTab.Todo)
+        assertEquals(NavMotion.TabToRight, state.motion)
+
+        state.push(IssueDetailRoute("owner", "repo", 1))
+
+        assertEquals(NavMotion.Push, state.motion)
+    }
+
+    @Test
     fun popOnlyAffectsSelectedStack() {
         val state = newState()
         state.push(IssueDetailRoute("owner", "repo", 1))

@@ -1,5 +1,6 @@
 package com.hfad.atomgit.ui.pull
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,7 @@ fun PullDetailScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .testTag("screen-pull-detail")
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),

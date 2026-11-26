@@ -45,6 +45,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.hfad.atomgit.data.model.TodoItem
 import com.hfad.atomgit.data.model.TodoKind
 import com.hfad.atomgit.data.remote.error.ApiError
+import com.hfad.atomgit.ui.components.InboxLayout
+import com.hfad.atomgit.ui.components.InboxScreenTitleBar
 
 @Composable
 fun TodoScreen(
@@ -66,7 +68,7 @@ fun TodoScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(colors.surfaceVariant)
+            .background(colors.surfaceContainerLow)
             .testTag("screen-todo"),
     ) {
         Surface(
@@ -75,19 +77,7 @@ fun TodoScreen(
             tonalElevation = 0.dp,
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = "待办",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface,
-                    )
+                InboxScreenTitleBar(title = "待办") {
                     CountPill(label = state.countLabel())
                 }
 
@@ -174,7 +164,10 @@ private fun SourceChipRow(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(
+                horizontal = InboxLayout.screenHorizontal,
+                vertical = InboxLayout.filterBarVertical,
+            ),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         sources.forEach { source ->
@@ -184,6 +177,7 @@ private fun SourceChipRow(
                 label = {
                     Text(
                         text = source.chipLabel(),
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (source == selected) FontWeight.SemiBold else FontWeight.Medium,
                     )
                 },
@@ -220,8 +214,13 @@ private fun TodoList(
         modifier = Modifier
             .fillMaxSize()
             .testTag("todo-list"),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(
+            start = InboxLayout.listHorizontal,
+            end = InboxLayout.listHorizontal,
+            top = InboxLayout.listTop,
+            bottom = InboxLayout.listBottom,
+        ),
+        verticalArrangement = Arrangement.spacedBy(InboxLayout.listItemGap),
     ) {
         itemsIndexed(
             items = state.items,
