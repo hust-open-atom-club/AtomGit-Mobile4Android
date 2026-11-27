@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -327,6 +328,8 @@ private fun IssueTopBar(
 ) {
     val colors = MaterialTheme.colorScheme
     TopAppBar(
+        // Scaffold 已预留状态栏高度，避免 TopAppBar 再叠一层出现顶部白条
+        windowInsets = WindowInsets(0, 0, 0, 0),
         title = {},
         navigationIcon = {
             IconButton(onClick = onBack, modifier = Modifier.testTag("issue-detail-back")) {
